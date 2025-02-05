@@ -15,12 +15,13 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		log.Println("No .env file found")
 	}
+
+	//middlewares
 	router := gin.Default()
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 	router.Use(middlewares.SecurityHeaders())
 	router.Use(middlewares.RateLimiter())
-	router.Use(middlewares.CSRFMiddleware())
 	router.Use(cors.New(cors.Config{
 		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
@@ -28,17 +29,24 @@ func main() {
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
 	}))
-	router.Use(middlewares.APIKeyAuth())
+	//router.Use(middlewares.APIKeyAuth())
 	router.Use(gzip.Gzip(gzip.BestCompression))
+
+	//test endpoint
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{"Message": "app works"})
 	})
+
+	//public endpoints
 	public := router.Group("/public-api")
-	private := router.Group("/private-api")
-	private.Use(middlewares.AuthMiddleware())
 	public.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "Hi, public works"})
 	})
+
+	//private endpoints (need to login before use)
+	private := router.Group("/private-api")
+	private.Use(middlewares.AuthMiddleware())
+	//private.Use(middlewares.CSRFMiddleware())
 	private.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{"message": "Hi, private works"})
 	})
