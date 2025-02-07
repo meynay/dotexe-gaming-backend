@@ -1,4 +1,4 @@
-package loginsignup
+package user_delivary
 
 import (
 	"net/http"
@@ -7,7 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-func RefreshToken(c *gin.Context) {
+func (d *UserDelivery) RefreshToken(c *gin.Context) {
 	//gets the refresh token
 	var request struct {
 		RefreshToken string `json:"refresh_token"`
@@ -18,14 +18,18 @@ func RefreshToken(c *gin.Context) {
 	}
 
 	//validates refresh token and takes phone number out of it
-	phoneNumber, err := jwt.ValidateJWT(request.RefreshToken)
+	id, err := jwt.ValidateJWT(request.RefreshToken)
 	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid refresh token"})
+		return
+	}
+	if !d.uu.TokenExists(id, request.RefreshToken) {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid refresh token"})
 		return
 	}
 
 	//generates new access token
-	newAccessToken, _, err := jwt.GenerateJWT(phoneNumber)
+	newAccessToken, _, err := jwt.GenerateJWT(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate new access token"})
 		return

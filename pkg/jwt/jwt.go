@@ -10,11 +10,11 @@ import (
 var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
 
 // generates both access token and refresh token
-func GenerateJWT(phoneNumber string) (accessToken string, refreshToken string, err error) {
+func GenerateJWT(id string) (accessToken string, refreshToken string, err error) {
 	//generates access token
 	accessClaims := jwt.MapClaims{
-		"phone_number": phoneNumber,
-		"exp":          time.Now().Add(15 * time.Minute).Unix(),
+		"id":  id,
+		"exp": time.Now().Add(15 * time.Minute).Unix(),
 	}
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 	accessToken, err = at.SignedString(jwtSecret)
@@ -24,8 +24,8 @@ func GenerateJWT(phoneNumber string) (accessToken string, refreshToken string, e
 
 	//generates refresh token
 	refreshClaims := jwt.MapClaims{
-		"phone_number": phoneNumber,
-		"exp":          time.Now().Add(30 * 24 * time.Hour).Unix(),
+		"id":  id,
+		"exp": time.Now().Add(30 * 24 * time.Hour).Unix(),
 	}
 	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
 	refreshToken, err = rt.SignedString(jwtSecret)
@@ -42,8 +42,8 @@ func ValidateJWT(tokenString string) (string, error) {
 		return "", err
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		phoneNumber := claims["phone_number"].(string)
-		return phoneNumber, nil
+		id := claims["id"].(string)
+		return id, nil
 	}
 	return "", jwt.ErrSignatureInvalid
 }
