@@ -9,10 +9,11 @@ import (
 )
 
 type UserDelivery struct {
-	uu *user_usecase.UserUsecase
+	uu        *user_usecase.UserUsecase
+	generator jwt.JWTTokenHandler
 }
 
-func NewUserDelivary(uu *user_usecase.UserUsecase) *UserDelivery {
+func NewUserDelivary(uu *user_usecase.UserUsecase, j *jwt.JWTTokenHandler) *UserDelivery {
 	return &UserDelivery{uu: uu}
 }
 
@@ -54,7 +55,7 @@ func (d *UserDelivery) LoginWithEmail(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"message": "wrong password"})
 		return
 	}
-	at, rt, err := jwt.GenerateJWT(id)
+	at, rt, err := d.generator.GenerateJWT(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err})
 	}
@@ -81,7 +82,7 @@ func (d *UserDelivery) LoginWithPhone(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"message": "wrong code"})
 		return
 	}
-	at, rt, err := jwt.GenerateJWT(id)
+	at, rt, err := d.generator.GenerateJWT(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err})
 	}
@@ -108,7 +109,7 @@ func (d *UserDelivery) SignupWithEmail(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "couldn't register user"})
 		return
 	}
-	at, rt, err := jwt.GenerateJWT(id)
+	at, rt, err := d.generator.GenerateJWT(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err})
 	}
@@ -135,7 +136,7 @@ func (d *UserDelivery) SignupWithPhone(c *gin.Context) {
 		c.JSON(http.StatusNotFound, gin.H{"message": "wrong code"})
 		return
 	}
-	at, rt, err := jwt.GenerateJWT(id)
+	at, rt, err := d.generator.GenerateJWT(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err})
 	}

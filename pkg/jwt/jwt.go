@@ -1,23 +1,28 @@
 package jwt
 
 import (
-	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
 
-var jwtSecret = []byte(os.Getenv("JWT_SECRET"))
+type JWTTokenHandler struct {
+	secret string
+}
+
+func NewJWTTokenHandler(secret string) *JWTTokenHandler {
+	return &JWTTokenHandler{secret: secret}
+}
 
 // generates both access token and refresh token
-func GenerateJWT(id string) (accessToken string, refreshToken string, err error) {
+func (j *JWTTokenHandler) GenerateJWT(id string) (accessToken string, refreshToken string, err error) {
 	//generates access token
 	accessClaims := jwt.MapClaims{
 		"id":  id,
 		"exp": time.Now().Add(15 * time.Minute).Unix(),
 	}
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
-	accessToken, err = at.SignedString(jwtSecret)
+	accessToken, err = at.SignedString(j.secret)
 	if err != nil {
 		return
 	}
@@ -28,15 +33,15 @@ func GenerateJWT(id string) (accessToken string, refreshToken string, err error)
 		"exp": time.Now().Add(30 * 24 * time.Hour).Unix(),
 	}
 	rt := jwt.NewWithClaims(jwt.SigningMethodHS256, refreshClaims)
-	refreshToken, err = rt.SignedString(jwtSecret)
+	refreshToken, err = rt.SignedString(j.secret)
 
 	return
 }
 
 // checks if token is valid
-func ValidateJWT(tokenString string) (string, error) {
+func (j *JWTTokenHandler) ValidateJWT(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		return jwtSecret, nil
+		return j.secret, nil
 	})
 	if err != nil {
 		return "", err

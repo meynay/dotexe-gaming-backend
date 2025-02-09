@@ -1,6 +1,9 @@
 package pkg
 
-import "regexp"
+import (
+	"regexp"
+	"strings"
+)
 
 func PhoneValidator(phone string) bool {
 	pattern := `^09\d{9}$`
@@ -9,5 +12,11 @@ func PhoneValidator(phone string) bool {
 }
 
 func EmailValidator(email string) bool {
-	return true
+	pattern := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,25}$`
+	re := regexp.MustCompile(pattern)
+	if !re.MatchString(email) {
+		return false
+	}
+	domainPart := email[strings.LastIndex(email, "@")+1:]
+	return !strings.Contains(domainPart, "..")
 }

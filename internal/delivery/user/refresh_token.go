@@ -2,7 +2,6 @@ package user_delivary
 
 import (
 	"net/http"
-	"store/pkg/jwt"
 
 	"github.com/gin-gonic/gin"
 )
@@ -18,7 +17,7 @@ func (d *UserDelivery) RefreshToken(c *gin.Context) {
 	}
 
 	//validates refresh token and takes phone number out of it
-	id, err := jwt.ValidateJWT(request.RefreshToken)
+	id, err := d.generator.ValidateJWT(request.RefreshToken)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid refresh token"})
 		return
@@ -29,7 +28,7 @@ func (d *UserDelivery) RefreshToken(c *gin.Context) {
 	}
 
 	//generates new access token
-	newAccessToken, _, err := jwt.GenerateJWT(id)
+	newAccessToken, _, err := d.generator.GenerateJWT(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate new access token"})
 		return

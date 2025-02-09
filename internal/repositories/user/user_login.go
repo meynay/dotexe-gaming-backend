@@ -2,8 +2,9 @@ package user_rep
 
 import (
 	"context"
-	"errors"
+	"fmt"
 	"store/internal/entities"
+	"store/pkg"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -31,12 +32,16 @@ func (r *UserRepository) InsertUserByPhone(phone string) (*entities.User, error)
 }
 
 func (r *UserRepository) InsertUserByEmail(email, password string) (*entities.User, error) {
+	password, err := pkg.HashPassword(password)
+	if err != nil {
+		return nil, err
+	}
 	user := bson.M{
 		"email":      email,
 		"password":   password,
 		"created_at": time.Now(),
 	}
-	_, err := r.db.InsertOne(context.TODO(), user)
+	_, err = r.db.InsertOne(context.TODO(), user)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +52,7 @@ func (r *UserRepository) GetUserByPhone(phone string) (*entities.User, error) {
 	var user entities.User
 	err := r.db.FindOne(context.TODO(), bson.M{"phone": phone}).Decode(&user)
 	if err != nil {
-		return nil, errors.New("user not found")
+		return nil, fmt.Errorf("user not found")
 	}
 	return &user, nil
 }
@@ -56,16 +61,19 @@ func (r *UserRepository) GetUserByEmail(email string) (*entities.User, error) {
 	var user entities.User
 	err := r.db.FindOne(context.TODO(), bson.M{"email": email}).Decode(&user)
 	if err != nil {
-		return nil, errors.New("user not found")
+		return nil, fmt.Errorf("user not found")
 	}
 	return &user, nil
 }
 
 func (r *UserRepository) CheckUser(email, password string) (*entities.User, error) {
 	var user entities.User
-	err := r.db.FindOne(context.TODO(), bson.M{"email": email, "password": password}).Decode(&user)
+	err := r.db.FindOne(context.TODO(), bson.M{"email": email}).Decode(&user)
 	if err != nil {
-		return nil, errors.New("wrong password not found")
+		return nil, fmt.Errorf("user not found")
+	}
+	if pkg.CompareHashAndPassword(user.Password, password) != nil {
+		return nil, fmt.Errorf("wrong password")
 	}
 	return &user, nil
 }

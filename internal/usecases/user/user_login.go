@@ -1,9 +1,11 @@
 package user_usecase
 
 import (
+	"fmt"
 	"log"
 	user_rep "store/internal/repositories/user"
 	"store/pkg"
+	"store/pkg/cacher"
 )
 
 const (
@@ -17,10 +19,11 @@ const (
 
 type UserUsecase struct {
 	userRep *user_rep.UserRepository
+	cache   *cacher.Cacher
 }
 
-func NewUserUsecase(ur *user_rep.UserRepository) *UserUsecase {
-	return &UserUsecase{userRep: ur}
+func NewUserUsecase(ur *user_rep.UserRepository, c *cacher.Cacher) *UserUsecase {
+	return &UserUsecase{userRep: ur, cache: c}
 }
 
 func (u *UserUsecase) FirstAttempt(inp string) (int, string) {
@@ -31,6 +34,7 @@ func (u *UserUsecase) FirstAttempt(inp string) (int, string) {
 		user, err := u.userRep.GetUserByPhone(inp)
 		number := pkg.RandomNumber()
 		log.Println(number)
+		u.cache.CacheSignInCode(inp, number)
 		if err != nil {
 			return RegisterWithPhone, "register with phone"
 		}
@@ -57,6 +61,13 @@ func (u *UserUsecase) LoginWithEmail(email, password string) (string, error) {
 }
 
 func (u *UserUsecase) LoginWithPhone(phone, code string) (string, error) {
+	result, err := u.cache.CheckCode(phone, code)
+	if err != nil {
+		return "", err
+	}
+	if !result {
+		return "", fmt.Errorf("wrong code")
+	}
 	user, err := u.userRep.GetUserByPhone(phone)
 	if err != nil {
 		return "", err
@@ -72,8 +83,15 @@ func (u *UserUsecase) SignupWithEmail(email, password string) (string, error) {
 	return user.ID, nil
 }
 
-func (u *UserUsecase) SignupWithPhone(Phone, code string) (string, error) {
-	user, err := u.userRep.InsertUserByPhone(Phone)
+func (u *UserUsecase) SignupWithPhone(phone, code string) (string, error) {
+	result, err := u.cache.CheckCode(phone, code)
+	if err != nil {
+		return "", err
+	}
+	if !result {
+		return "", fmt.Errorf("wrong code")
+	}
+	user, err := u.userRep.InsertUserByPhone(phone)
 	if err != nil {
 		return "", err
 	}
