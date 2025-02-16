@@ -82,7 +82,7 @@ func (r *UserRepository) SaveToken(userID, token string) error {
 	_, err := r.db.UpdateOne(
 		context.TODO(),
 		bson.M{"id": userID},
-		bson.M{"$set": bson.M{"refresh_token": token}},
+		bson.M{"refresh_token": token},
 	)
 	return err
 }

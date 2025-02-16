@@ -1,8 +1,8 @@
-package user_delivary
+package user_delivery
 
 import (
 	"net/http"
-	user_usecase "store/internal/usecases/user"
+	"store/internal/usecases/user_usecase"
 	"store/pkg/jwt"
 
 	"github.com/gin-gonic/gin"

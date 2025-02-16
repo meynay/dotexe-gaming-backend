@@ -2,7 +2,7 @@ package user_rep_test
 
 import (
 	"context"
-	user_rep "store/internal/repositories/user"
+	"store/internal/repositories/user_rep"
 	"testing"
 	"time"
 

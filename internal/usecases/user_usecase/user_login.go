@@ -3,7 +3,7 @@ package user_usecase
 import (
 	"fmt"
 	"log"
-	user_rep "store/internal/repositories/user"
+	"store/internal/repositories/user_rep"
 	"store/pkg"
 	"store/pkg/cacher"
 )
