@@ -17,7 +17,7 @@ func (pr *ProductRep) AddCategory(c entities.Category) error {
 }
 
 func (pr *ProductRep) GetCategoryName(ID string) (string, error) {
-	res := pr.cgdb.FindOne(context.TODO(), bson.M{"id": ID})
+	res := pr.cgdb.FindOne(context.TODO(), bson.M{"_id": ID})
 	if res.Err() != nil {
 		return "", fmt.Errorf("couldn't find category")
 	}
@@ -30,13 +30,31 @@ func (pr *ProductRep) GetCategoryName(ID string) (string, error) {
 
 func (pr *ProductRep) GetParents(ID string) []string {
 	parents := []string{}
-	res := pr.cgdb.FindOne(context.TODO(), bson.M{"id": ID})
+	res := pr.cgdb.FindOne(context.TODO(), bson.M{"_id": ID})
 	var c entities.Category
 	res.Decode(&c)
 	for c.ParentID != "" {
 		parents = append(parents, c.ParentID)
-		res = pr.cgdb.FindOne(context.TODO(), bson.M{"id": c.ParentID})
+		res = pr.cgdb.FindOne(context.TODO(), bson.M{"_id": c.ParentID})
 		res.Decode(&c)
 	}
 	return parents
+}
+
+func (pr *ProductRep) EditCategory(c entities.Category) error {
+	_, err := pr.prdb.UpdateOne(context.TODO(), bson.M{
+		"_id": c.ID,
+	}, c)
+	if err != nil {
+		return fmt.Errorf("couldn't update category")
+	}
+	return nil
+}
+
+func (pr *ProductRep) DeleteCategory(ID string) error {
+	_, err := pr.prdb.DeleteOne(context.TODO(), bson.M{"_id": ID})
+	if err != nil {
+		return fmt.Errorf("couldn't delete category")
+	}
+	return nil
 }

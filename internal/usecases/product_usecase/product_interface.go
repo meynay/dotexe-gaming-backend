@@ -9,5 +9,8 @@ type ProductUseCaseI interface {
 	EditProduct(p entities.Product) error
 	FilterProducts(f entities.Filter) ([]entities.ProductLess, error)
 	DeleteProduct(ID string) error
+	AddRatingToProduct(rate float64, ID string) error
+	ChangeProductRating(oldRate, newRate float64, ID string) error
+	AddPurchaseCount(count int, ID string) error
 	AddCategory(c entities.Category) error
 }

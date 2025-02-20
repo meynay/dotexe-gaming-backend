@@ -27,7 +27,7 @@ func (pr *ProductRep) AddProduct(p entities.Product) error {
 }
 func (pr *ProductRep) GetProduct(ID string) (entities.Product, error) {
 	res := pr.prdb.FindOne(context.TODO(), bson.M{
-		"id": ID,
+		"_id": ID,
 	})
 	var product entities.Product
 	if res.Err() != nil {
@@ -52,7 +52,7 @@ func (pr *ProductRep) GetProducts() ([]entities.Product, error) {
 
 func (pr *ProductRep) EditProduct(p entities.Product) error {
 	_, err := pr.prdb.UpdateOne(context.TODO(), bson.M{
-		"id": p.ID,
+		"_id": p.ID,
 	}, p)
 	if err != nil {
 		return fmt.Errorf("couldn't update product")
@@ -61,7 +61,7 @@ func (pr *ProductRep) EditProduct(p entities.Product) error {
 }
 
 func (pr *ProductRep) DeleteProduct(ID string) error {
-	_, err := pr.prdb.DeleteOne(context.TODO(), bson.M{"id": ID})
+	_, err := pr.prdb.DeleteOne(context.TODO(), bson.M{"_id": ID})
 	if err != nil {
 		return fmt.Errorf("couldn't delete product")
 	}

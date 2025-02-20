@@ -28,7 +28,7 @@ func (bp *BlogPostRep) AddBlogPost(b entities.BlogPost) error {
 
 func (bp *BlogPostRep) GetBlogPost(ID string) (entities.BlogPost, error) {
 	res := bp.bpdb.FindOne(context.TODO(), bson.M{
-		"id": ID,
+		"_id": ID,
 	})
 	if res.Err() != nil {
 		return entities.BlogPost{}, fmt.Errorf("no documents found")
@@ -56,7 +56,7 @@ func (bp *BlogPostRep) GetBlogPosts() ([]entities.BlogPost, error) {
 
 func (bp *BlogPostRep) EditBlogPost(b entities.BlogPost) error {
 	_, err := bp.bpdb.UpdateOne(context.TODO(), bson.M{
-		"id": b.ID,
+		"_id": b.ID,
 	}, b)
 	if err != nil {
 		return fmt.Errorf("couldn't update blogpost")
@@ -65,7 +65,7 @@ func (bp *BlogPostRep) EditBlogPost(b entities.BlogPost) error {
 }
 
 func (bp *BlogPostRep) DeleteBlogPost(ID string) error {
-	_, err := bp.bpdb.DeleteOne(context.TODO(), bson.M{"id": ID})
+	_, err := bp.bpdb.DeleteOne(context.TODO(), bson.M{"_id": ID})
 	if err != nil {
 		return fmt.Errorf("couldn't delete blogpost")
 	}

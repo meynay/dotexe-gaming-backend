@@ -3,7 +3,7 @@ package entities
 import "time"
 
 type BlogPost struct {
-	ID        string    `json:"id"`
+	ID        string    `json:"_id"`
 	Title     string    `json:"title"`
 	Content   string    `json:"content"`
 	Image     string    `json:"image"`
@@ -12,7 +12,7 @@ type BlogPost struct {
 }
 
 type BPComment struct {
-	ID         string    `json:"id"`
+	ID         string    `json:"_id"`
 	BlogPostID string    `json:"blogpost_id"`
 	Replier    string    `json:"replier"`
 	Comment    string    `json:"comment"`
@@ -20,7 +20,7 @@ type BPComment struct {
 }
 
 type BlogPostR struct {
-	ID          string    `json:"id"`
+	ID          string    `json:"_id"`
 	Title       string    `json:"title"`
 	Content     string    `json:"content"`
 	Image       string    `json:"image"`

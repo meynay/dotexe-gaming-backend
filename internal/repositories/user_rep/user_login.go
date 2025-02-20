@@ -20,9 +20,11 @@ func NewUserRepository(db *mongo.Collection) *UserRepository {
 }
 
 func (r *UserRepository) InsertUserByPhone(phone string) (*entities.User, error) {
-	user := bson.M{
-		"phone":      phone,
-		"created_at": time.Now(),
+	user := entities.User{
+		Phone:     phone,
+		CreatedAt: time.Now(),
+		Faves:     []string{},
+		Cart:      []entities.Item{},
 	}
 	_, err := r.db.InsertOne(context.TODO(), user)
 	if err != nil {
@@ -36,10 +38,12 @@ func (r *UserRepository) InsertUserByEmail(email, password string) (*entities.Us
 	if err != nil {
 		return nil, err
 	}
-	user := bson.M{
-		"email":      email,
-		"password":   password,
-		"created_at": time.Now(),
+	user := entities.User{
+		Email:     email,
+		Password:  password,
+		CreatedAt: time.Now(),
+		Faves:     []string{},
+		Cart:      []entities.Item{},
 	}
 	_, err = r.db.InsertOne(context.TODO(), user)
 	if err != nil {
@@ -81,14 +85,14 @@ func (r *UserRepository) CheckUser(email, password string) (*entities.User, erro
 func (r *UserRepository) SaveToken(userID, token string) error {
 	_, err := r.db.UpdateOne(
 		context.TODO(),
-		bson.M{"id": userID},
-		bson.M{"refresh_token": token},
+		bson.M{"_id": userID},
+		bson.M{"$set": bson.M{"refresh_token": token}},
 	)
 	return err
 }
 
 func (r *UserRepository) TokenExists(userID, token string) error {
 	var user entities.User
-	err := r.db.FindOne(context.TODO(), bson.M{"id": userID, "refresh_token": token}).Decode(&user)
+	err := r.db.FindOne(context.TODO(), bson.M{"_id": userID, "refresh_token": token}).Decode(&user)
 	return err
 }

@@ -20,6 +20,10 @@ func (pu *ProductUseCase) AddProduct(p entities.Product) error {
 }
 
 func (pu *ProductUseCase) GetProduct(ID string) (entities.Product, error) {
+	err := pu.rep.AddViewToProduct(ID)
+	if err != nil {
+		return entities.Product{}, err
+	}
 	return pu.rep.GetProduct(ID)
 }
 
@@ -101,11 +105,18 @@ func (pu *ProductUseCase) FilterProducts(filter entities.Filter) ([]entities.Pro
 			return ps[i].Pr.AddedAt.After(ps[j].Pr.AddedAt)
 		})
 	case entities.MostPurchased:
+		sort.Slice(ps, func(i, j int) bool {
+			return ps[i].Pr.PurchaseCount > ps[j].Pr.PurchaseCount
+		})
 	case entities.MostRelevant:
 		sort.Slice(ps, func(i, j int) bool {
 			return ps[i].Score > ps[j].Score
 		})
 	case entities.MostViewed:
+		sort.Slice(ps, func(i, j int) bool {
+			return ps[i].Pr.Views > ps[j].Pr.Views
+		})
+	case entities.MostRate:
 	}
 	pages := len(ps) / filter.NumberOfItems
 	start := filter.NumberOfItems * (filter.Page - 1)
