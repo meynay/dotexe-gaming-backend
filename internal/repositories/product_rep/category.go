@@ -52,9 +52,19 @@ func (pr *ProductRep) EditCategory(c entities.Category) error {
 }
 
 func (pr *ProductRep) DeleteCategory(ID string) error {
-	_, err := pr.prdb.DeleteOne(context.TODO(), bson.M{"_id": ID})
+	_, err := pr.cgdb.DeleteOne(context.TODO(), bson.M{"_id": ID})
 	if err != nil {
 		return fmt.Errorf("couldn't delete category")
 	}
 	return nil
+}
+
+func (pr *ProductRep) GetCategories() []entities.Category {
+	categories := []entities.Category{}
+	cur, err := pr.cgdb.Find(context.TODO(), bson.M{})
+	if err != nil {
+		return categories
+	}
+	cur.Decode(&categories)
+	return categories
 }

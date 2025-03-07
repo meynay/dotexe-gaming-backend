@@ -17,15 +17,20 @@ func (up *UserProductRep) AddToCart(productid, userid string) error {
 	return nil
 }
 
-func (up *UserProductRep) EditQuantity(productid, userid string, count int) error {
-	update := bson.M{}
+func (up *UserProductRep) EditQuantity(productid, userid string, asc bool) error {
+	var update bson.M
+	if asc {
+		update = bson.M{}
+	} else {
+		update = bson.M{}
+	}
 
 	up.user.UpdateOne(context.TODO(), bson.M{"_id": userid, "cart.product_id": productid}, update)
 	return nil
 }
 
-func (up *UserProductRep) DeleteFromCart(productid, userid string, count int) error {
-	return nil
+func (up *UserProductRep) IsInCart(productid, userid string) (int, error) {
+	return 0, nil
 }
 
 func (up *UserProductRep) GetCart(userid string) ([]entities.Item, error) {

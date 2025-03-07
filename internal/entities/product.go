@@ -25,6 +25,7 @@ type Product struct {
 	RateCount     int               `json:"rate_count"`
 	Views         int               `json:"views"`
 	PurchaseCount int               `json:"purchase_count"`
+	Tags          []string          `json:"tags"`
 }
 
 type ProductLess struct {

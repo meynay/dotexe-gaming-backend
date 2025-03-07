@@ -5,6 +5,7 @@ import (
 	"store/internal/entities"
 	"store/internal/repositories/product_rep"
 	"store/pkg"
+	"strings"
 )
 
 type ProductUseCase struct {
@@ -27,27 +28,32 @@ func (pu *ProductUseCase) GetProduct(ID string) (entities.Product, error) {
 	return pu.rep.GetProduct(ID)
 }
 
-func (pu *ProductUseCase) GetProducts() ([]entities.ProductLess, error) {
+func (pu *ProductUseCase) GetProducts(query string) ([]entities.ProductLess, []entities.Category, error) {
+	var prdcts []entities.ProductLess
+	var ctgrs []entities.Category
 	products, err := pu.rep.GetProducts()
-	var p []entities.ProductLess
+	categories := pu.rep.GetCategories()
 	if err != nil {
-		return p, err
+		return prdcts, ctgrs, err
 	}
 	for _, product := range products {
-		var pr = entities.ProductLess{
-			ID:    product.ID,
-			Image: product.Image,
-			Name:  product.Name,
-			Price: product.Price,
-			Off:   product.Off,
+		if strings.Contains(product.Name, query) {
+			prdcts = append(prdcts, entities.ProductLess{
+				ID:          product.ID,
+				Name:        product.Name,
+				Image:       product.Image,
+				Description: product.Description,
+				Rating:      product.Rating,
+				RateCount:   product.RateCount,
+			})
 		}
-		pr.Category, err = pu.rep.GetCategoryName(product.CategoryID)
-		if err != nil {
-			return p, err
-		}
-		p = append(p, pr)
 	}
-	return p, nil
+	for _, category := range categories {
+		if strings.Contains(category.Name, query) {
+			ctgrs = append(ctgrs, category)
+		}
+	}
+	return prdcts, ctgrs, nil
 }
 
 func (pu *ProductUseCase) EditProduct(p entities.Product) error {

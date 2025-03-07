@@ -5,8 +5,14 @@ import (
 	"fmt"
 	"os"
 	"store/internal/delivery/middlewares"
+	"store/internal/delivery/product_delivery"
 	"store/internal/delivery/user_delivery"
+	"store/internal/delivery/user_product_delivery"
+	"store/internal/repositories/product_rep"
+	"store/internal/repositories/user_product_rep"
 	"store/internal/repositories/user_rep"
+	"store/internal/usecases/product_usecase"
+	"store/internal/usecases/user_product_usecase"
 	"store/internal/usecases/user_usecase"
 	"store/pkg/cacher"
 	"store/pkg/jwt"
@@ -57,28 +63,48 @@ func StartServer() {
 		c.JSON(200, gin.H{"Message": "app works"})
 	})
 	userCollection := database.Collection("user")
+	productCollection := database.Collection("product")
+	categoryCollection := database.Collection("category")
+	ratesCollection := database.Collection("rate")
+	invoicesCollection := database.Collection("invoice")
+	commentsCollection := database.Collection("comment")
+
 	userRep := user_rep.NewUserRepository(userCollection)
 	userUsercase := user_usecase.NewUserUsecase(userRep, cacher)
 	j := jwt.NewJWTTokenHandler(jwtsecret)
 	userDelivery := user_delivery.NewUserDelivary(userUsercase, j)
 
+	productRep := product_rep.NewProductRep(productCollection, categoryCollection)
+	productUsecase := product_usecase.NewProductUseCase(productRep)
+	productDelivery := product_delivery.NewProductDelivery(productUsecase)
+
+	userproductRep := user_product_rep.NewUserProductRep(ratesCollection, userCollection, productCollection, invoicesCollection, commentsCollection, categoryCollection)
+	userproductUsecase := user_product_usecase.NewUserProductUsecase(userproductRep)
+	userproductDelivery := user_product_delivery.NewUserProductDelivery(userproductUsecase)
+
 	public := router.Group("/public-api")
-	public.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "Hi, public works"})
-	})
 	public.POST("/signin", userDelivery.FirstStep)
 	public.POST("/loginphone", userDelivery.LoginWithPhone)
 	public.POST("/loginemail", userDelivery.LoginWithEmail)
 	public.POST("/signupphone", userDelivery.SignupWithPhone)
 	public.POST("/signupemail", userDelivery.SignupWithEmail)
 	public.POST("/refreshtoken", userDelivery.RefreshToken)
-
+	public.GET("/getproduct/:id", productDelivery.GetProduct)
+	public.GET("/getproducts", productDelivery.GetProducts)
+	public.GET("/query", productDelivery.SearchQuery)
+	public.GET("/getcomments/:id", userproductDelivery.GetComments)
+	public.GET("/getrates/:id", userproductDelivery.GetRates)
 	private := router.Group("/private-api")
 	a := middlewares.NewAuth(j)
 	private.Use(a.AuthMiddleware())
+	private.GET("/isinfaves/:id", userproductDelivery.CheckFave)
+	private.GET("/userfaves", userproductDelivery.GetFaves)
 	//private.Use(middlewares.CSRFMiddleware())
-	private.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{"message": "Hi, private works"})
-	})
+	admin := router.Group(os.Getenv("ADMIN_ROUTE"))
+	admin.Use()
+	admin.POST("/addproduct", productDelivery.AddProduct)
+	admin.POST("/addcategory", productDelivery.AddCategory)
+	admin.DELETE("/deleteproduct/:id", productDelivery.DeleteProduct)
+	admin.PUT("/editproduct/:id", productDelivery.EditProduct)
 	router.Run(":8080")
 }

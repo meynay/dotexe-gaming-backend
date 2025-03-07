@@ -92,10 +92,20 @@ func (pd *ProductDelivery) EditProduct(c *gin.Context) {
 }
 
 func (pd *ProductDelivery) DeleteProduct(c *gin.Context) {
-	id := c.Query("id")
+	id := c.Param("id")
 	if pd.pu.DeleteProduct(id) != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "couldn't delete product"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "product deleted successfully"})
+}
+
+func (pd *ProductDelivery) SearchQuery(c *gin.Context) {
+	query := c.Query("query")
+	products, categories, err := pd.pu.GetProducts(query)
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"message": "no products found"})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"products": products, "categories": categories})
 }

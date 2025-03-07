@@ -85,6 +85,7 @@ func (d *UserDelivery) LoginWithPhone(c *gin.Context) {
 	at, rt, err := d.generator.GenerateJWT(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err})
+		return
 	}
 	d.uu.SaveToken(id, rt)
 	c.JSON(http.StatusOK, gin.H{
