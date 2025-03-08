@@ -27,6 +27,7 @@ type InvoiceFilter struct {
 	From        time.Time
 	To          time.Time
 	CountToShow int
+	Page        int
 }
 
 const (
@@ -34,4 +35,5 @@ const (
 	GettingReady
 	ReadyToPost
 	Posted
+	All
 )

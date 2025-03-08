@@ -3,6 +3,7 @@ package invoice_rep
 import (
 	"context"
 	"fmt"
+	"log"
 	"store/internal/entities"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -22,7 +23,18 @@ func (ir *InvoiceRep) AddInvoice(invoice entities.Invoice) error {
 	if err != nil {
 		return fmt.Errorf("couldn't insert invoice")
 	}
+	log.Printf("invoice %s added with status %d", invoice.ID, invoice.OrderStatus)
 	return nil
+}
+
+func (ir *InvoiceRep) GetInvoice(id string) (entities.Invoice, error) {
+	invoice := entities.Invoice{}
+	res := ir.rep.FindOne(context.TODO(), bson.M{"_id": id})
+	if res.Err() != nil {
+		return invoice, fmt.Errorf("couldn't find invoice with given id")
+	}
+	res.Decode(&invoice)
+	return invoice, nil
 }
 
 func (ir *InvoiceRep) GetInvoices(userid string) ([]entities.Invoice, error) {
@@ -33,4 +45,23 @@ func (ir *InvoiceRep) GetInvoices(userid string) ([]entities.Invoice, error) {
 	}
 	res.Decode(&invoices)
 	return invoices, nil
+}
+
+func (ir *InvoiceRep) GetAllInvoices() []entities.Invoice {
+	invoices := []entities.Invoice{}
+	res, err := ir.rep.Find(context.TODO(), bson.M{})
+	if err != nil {
+		return invoices
+	}
+	res.Decode(&invoices)
+	return invoices
+}
+
+func (ir *InvoiceRep) ChangeStatus(invoiceid string, status int) error {
+	_, err := ir.rep.UpdateOne(context.TODO(), bson.M{"_id": invoiceid}, bson.M{"$set": bson.M{"order_status": status}})
+	if err != nil {
+		return fmt.Errorf("couldn't update status")
+	}
+	log.Printf("Updated invoice %s to status %d", invoiceid, status)
+	return nil
 }
