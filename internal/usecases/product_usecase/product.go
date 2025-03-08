@@ -3,21 +3,19 @@ package product_usecase
 import (
 	"sort"
 	"store/internal/entities"
+	"store/internal/repositories/category_rep"
 	"store/internal/repositories/product_rep"
 	"store/pkg"
 	"strings"
 )
 
 type ProductUseCase struct {
-	rep *product_rep.ProductRep
+	rep         *product_rep.ProductRep
+	categoryrep *category_rep.CategoryRep
 }
 
-func NewProductUseCase(r *product_rep.ProductRep) *ProductUseCase {
-	return &ProductUseCase{rep: r}
-}
-
-func (pu *ProductUseCase) AddProduct(p entities.Product) error {
-	return pu.rep.AddProduct(p)
+func NewProductUseCase(r *product_rep.ProductRep, cr *category_rep.CategoryRep) *ProductUseCase {
+	return &ProductUseCase{rep: r, categoryrep: cr}
 }
 
 func (pu *ProductUseCase) GetProduct(ID string) (entities.Product, error) {
@@ -32,7 +30,7 @@ func (pu *ProductUseCase) GetProducts(query string) ([]entities.ProductLess, []e
 	var prdcts []entities.ProductLess
 	var ctgrs []entities.Category
 	products, err := pu.rep.GetProducts()
-	categories := pu.rep.GetCategories()
+	categories := pu.categoryrep.GetCategories()
 	if err != nil {
 		return prdcts, ctgrs, err
 	}
@@ -56,14 +54,6 @@ func (pu *ProductUseCase) GetProducts(query string) ([]entities.ProductLess, []e
 	return prdcts, ctgrs, nil
 }
 
-func (pu *ProductUseCase) EditProduct(p entities.Product) error {
-	return pu.rep.EditProduct(p)
-}
-
-func (pu *ProductUseCase) DeleteProduct(ID string) error {
-	return pu.rep.DeleteProduct(ID)
-}
-
 func (pu *ProductUseCase) FilterProducts(filter entities.Filter) ([]entities.ProductLess, int, error) {
 	products, err := pu.rep.GetProducts()
 	var p []entities.ProductLess
@@ -73,7 +63,7 @@ func (pu *ProductUseCase) FilterProducts(filter entities.Filter) ([]entities.Pro
 	if filter.CategoryID != "" {
 		newproducts := []entities.Product{}
 		for _, product := range products {
-			if product.CategoryID == filter.CategoryID || pkg.Exists(filter.CategoryID, pu.rep.GetParents(product.CategoryID)) {
+			if product.CategoryID == filter.CategoryID || pkg.Exists(filter.CategoryID, pu.categoryrep.GetParents(product.CategoryID)) {
 				newproducts = append(newproducts, product)
 			}
 		}
@@ -135,7 +125,8 @@ func (pu *ProductUseCase) FilterProducts(filter entities.Filter) ([]entities.Pro
 			Price: ps[start].Pr.Price,
 			Off:   ps[start].Pr.Off,
 		}
-		out.Category, _ = pu.rep.GetCategoryName(ps[start].Pr.CategoryID)
+		cat, _ := pu.categoryrep.GetCategory(ps[start].Pr.CategoryID)
+		out.Category = cat.Name
 		p = append(p, out)
 		start++
 	}

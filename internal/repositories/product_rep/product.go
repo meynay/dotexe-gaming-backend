@@ -11,11 +11,10 @@ import (
 
 type ProductRep struct {
 	prdb *mongo.Collection
-	cgdb *mongo.Collection
 }
 
-func NewProductRep(pr, cg *mongo.Collection) *ProductRep {
-	return &ProductRep{prdb: pr, cgdb: cg}
+func NewProductRep(pr *mongo.Collection) *ProductRep {
+	return &ProductRep{prdb: pr}
 }
 
 func (pr *ProductRep) AddProduct(p entities.Product) error {

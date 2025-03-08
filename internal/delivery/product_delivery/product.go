@@ -17,19 +17,6 @@ func NewProductDelivery(u *product_usecase.ProductUseCase) *ProductDelivery {
 	return &ProductDelivery{pu: u}
 }
 
-func (pd *ProductDelivery) AddProduct(c *gin.Context) {
-	product := entities.Product{}
-	if c.BindJSON(&product) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "bad json format"})
-		return
-	}
-	if pd.pu.AddProduct(product) != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "couldn't add product"})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "product added successfully"})
-}
-
 func (pd *ProductDelivery) GetProduct(c *gin.Context) {
 	productid := c.Param("id")
 	product, err := pd.pu.GetProduct(productid)
@@ -76,28 +63,6 @@ func (pd *ProductDelivery) GetProducts(c *gin.Context) {
 		"pages":    pages,
 		"products": products,
 	})
-}
-
-func (pd *ProductDelivery) EditProduct(c *gin.Context) {
-	product := entities.Product{}
-	if c.BindJSON(&product) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"message": "bad json format"})
-		return
-	}
-	if pd.pu.EditProduct(product) != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "couldn't update product"})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "product updated successfully"})
-}
-
-func (pd *ProductDelivery) DeleteProduct(c *gin.Context) {
-	id := c.Param("id")
-	if pd.pu.DeleteProduct(id) != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "couldn't delete product"})
-		return
-	}
-	c.JSON(http.StatusOK, gin.H{"message": "product deleted successfully"})
 }
 
 func (pd *ProductDelivery) SearchQuery(c *gin.Context) {

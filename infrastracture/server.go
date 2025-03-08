@@ -4,15 +4,25 @@ import (
 	"context"
 	"fmt"
 	"os"
+	"store/internal/delivery/admin_delivery"
+	"store/internal/delivery/comment_delivery"
+	"store/internal/delivery/fave_delivery"
 	"store/internal/delivery/middlewares"
 	"store/internal/delivery/product_delivery"
+	"store/internal/delivery/rating_delivery"
 	"store/internal/delivery/user_delivery"
-	"store/internal/delivery/user_product_delivery"
+	"store/internal/repositories/admin_rep"
+	"store/internal/repositories/category_rep"
+	"store/internal/repositories/comment_rep"
+	"store/internal/repositories/invoice_rep"
 	"store/internal/repositories/product_rep"
-	"store/internal/repositories/user_product_rep"
+	"store/internal/repositories/rating_rep"
 	"store/internal/repositories/user_rep"
+	"store/internal/usecases/admin_usecase"
+	"store/internal/usecases/comment_usecase"
+	"store/internal/usecases/fave_usecase"
 	"store/internal/usecases/product_usecase"
-	"store/internal/usecases/user_product_usecase"
+	"store/internal/usecases/rating_usecase"
 	"store/internal/usecases/user_usecase"
 	"store/pkg/cacher"
 	"store/pkg/jwt"
@@ -39,10 +49,11 @@ func StartServer() {
 		panic(err)
 	}
 	fmt.Println("Connected to MongoDB!")
-	database := client.Database("store")
+
 	jwtsecret := os.Getenv("JWT_SECRET")
 
 	router := gin.Default()
+	//common middlewares
 	router.Use(gin.Logger())
 	router.Use(gin.Recovery())
 	router.Use(middlewares.SecurityHeaders())
@@ -56,32 +67,48 @@ func StartServer() {
 	}))
 	//router.Use(middlewares.APIKeyAuth())
 	router.Use(gzip.Gzip(gzip.BestCompression))
-
 	cacher := cacher.NewCacher(os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PASS"))
-
 	router.GET("/", func(c *gin.Context) {
 		c.JSON(200, gin.H{"Message": "app works"})
 	})
+
+	//collections
+	database := client.Database("store")
 	userCollection := database.Collection("user")
 	productCollection := database.Collection("product")
 	categoryCollection := database.Collection("category")
-	ratesCollection := database.Collection("rate")
+	ratesCollection := database.Collection("rating")
 	invoicesCollection := database.Collection("invoice")
 	commentsCollection := database.Collection("comment")
+	adminCollection := database.Collection(os.Getenv("ADMIN_COLLECTION"))
 
+	//repositories
 	userRep := user_rep.NewUserRepository(userCollection)
+	productRep := product_rep.NewProductRep(productCollection)
+	categoryRep := category_rep.NewCategoryRep(categoryCollection)
+	ratingRep := rating_rep.NewRatingRep(ratesCollection)
+	commentsRep := comment_rep.NewCommentRep(commentsCollection)
+	invoiceRep := invoice_rep.NewInvoiceRep(invoicesCollection)
+	adminRep := admin_rep.NewAdminRep(adminCollection)
+
+	//usecases
 	userUsercase := user_usecase.NewUserUsecase(userRep, cacher)
+	productUsecase := product_usecase.NewProductUseCase(productRep, categoryRep)
+	faveUsecase := fave_usecase.NewFaveUsecase(userRep, productRep, categoryRep)
+	commentUsecase := comment_usecase.NewCommentUsecase(commentsRep, userRep)
+	ratingUsecase := rating_usecase.NewRatingUsecase(ratingRep, productRep, userRep)
+	adminUsecase := admin_usecase.NewAdminUsecase(productRep, categoryRep, invoiceRep, adminRep)
+
+	//deliveries
 	j := jwt.NewJWTTokenHandler(jwtsecret)
 	userDelivery := user_delivery.NewUserDelivary(userUsercase, j)
-
-	productRep := product_rep.NewProductRep(productCollection, categoryCollection)
-	productUsecase := product_usecase.NewProductUseCase(productRep)
 	productDelivery := product_delivery.NewProductDelivery(productUsecase)
+	adminDelivery := admin_delivery.NewAdminDelivery(adminUsecase)
+	faveDelivery := fave_delivery.NewFaveDelivery(faveUsecase)
+	commentDelivery := comment_delivery.NewCommentDelivery(commentUsecase)
+	ratingDelivery := rating_delivery.NewRatingDelivery(ratingUsecase)
 
-	userproductRep := user_product_rep.NewUserProductRep(ratesCollection, userCollection, productCollection, invoicesCollection, commentsCollection, categoryCollection)
-	userproductUsecase := user_product_usecase.NewUserProductUsecase(userproductRep)
-	userproductDelivery := user_product_delivery.NewUserProductDelivery(userproductUsecase)
-
+	//public group
 	public := router.Group("/public-api")
 	public.POST("/signin", userDelivery.FirstStep)
 	public.POST("/loginphone", userDelivery.LoginWithPhone)
@@ -92,19 +119,26 @@ func StartServer() {
 	public.GET("/getproduct/:id", productDelivery.GetProduct)
 	public.GET("/getproducts", productDelivery.GetProducts)
 	public.GET("/query", productDelivery.SearchQuery)
-	public.GET("/getcomments/:id", userproductDelivery.GetComments)
-	public.GET("/getrates/:id", userproductDelivery.GetRates)
+	public.GET("/getcomments/:id", commentDelivery.GetComments)
+	public.GET("/getrates/:id", ratingDelivery.GetRates)
+
+	//private group (needs auth)
 	private := router.Group("/private-api")
 	a := middlewares.NewAuth(j)
 	private.Use(a.AuthMiddleware())
-	private.GET("/isinfaves/:id", userproductDelivery.CheckFave)
-	private.GET("/userfaves", userproductDelivery.GetFaves)
+	private.GET("/isinfaves/:id", faveDelivery.CheckFave)
+	private.GET("/userfaves", faveDelivery.GetFaves)
+	private.POST("/faveproduct/:id", faveDelivery.FaveProduct)
+	private.DELETE("unfaveproduct/:id", faveDelivery.UnfaveProduct)
+
 	//private.Use(middlewares.CSRFMiddleware())
 	admin := router.Group(os.Getenv("ADMIN_ROUTE"))
 	admin.Use()
-	admin.POST("/addproduct", productDelivery.AddProduct)
-	admin.POST("/addcategory", productDelivery.AddCategory)
-	admin.DELETE("/deleteproduct/:id", productDelivery.DeleteProduct)
-	admin.PUT("/editproduct/:id", productDelivery.EditProduct)
+	admin.POST("/addproduct", adminDelivery.AddProduct)
+	admin.POST("/addcategory", adminDelivery.AddCategory)
+	admin.DELETE("/deleteproduct/:id", adminDelivery.DeleteProduct)
+	admin.DELETE("/deletecategory/:id", adminDelivery.DeleteCategory)
+	admin.PUT("/editproduct/:id", adminDelivery.EditProduct)
+	admin.PUT("/editcategory/:id", adminDelivery.EditCategory)
 	router.Run(":8080")
 }
