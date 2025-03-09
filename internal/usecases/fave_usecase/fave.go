@@ -5,6 +5,8 @@ import (
 	"store/internal/repositories/category_rep"
 	"store/internal/repositories/product_rep"
 	"store/internal/repositories/user_rep"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type FaveUsecase struct {
@@ -17,19 +19,19 @@ func NewFaveUsecase(ur *user_rep.UserRepository, pr *product_rep.ProductRep, cr 
 	return &FaveUsecase{userrep: ur, productrep: pr, categoryrep: cr}
 }
 
-func (fu *FaveUsecase) FaveProduct(userid, productid string) error {
+func (fu *FaveUsecase) FaveProduct(userid, productid primitive.ObjectID) error {
 	return fu.userrep.AddToFaves(productid, userid)
 }
 
-func (fu *FaveUsecase) UnfaveProduct(userid, productid string) error {
+func (fu *FaveUsecase) UnfaveProduct(userid, productid primitive.ObjectID) error {
 	return fu.userrep.DeleteFromFaves(productid, userid)
 }
 
-func (fu *FaveUsecase) CheckFave(userid, productid string) error {
+func (fu *FaveUsecase) CheckFave(userid, productid primitive.ObjectID) error {
 	return fu.userrep.CheckFave(productid, userid)
 }
 
-func (fu *FaveUsecase) GetFaves(userid string) []entities.ProductLess {
+func (fu *FaveUsecase) GetFaves(userid primitive.ObjectID) []entities.ProductLess {
 	pr := []entities.ProductLess{}
 	ids := fu.userrep.GetFaves(userid)
 	for _, id := range ids {

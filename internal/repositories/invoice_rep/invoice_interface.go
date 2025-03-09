@@ -1,11 +1,15 @@
 package invoice_rep
 
-import "store/internal/entities"
+import (
+	"store/internal/entities"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type InvoiceRepI interface {
 	AddInvoice(invoice entities.Invoice) error
-	GetInvoice(id string) (entities.Invoice, error)
-	GetInvoices(userid string) []entities.Invoice
+	GetInvoice(id primitive.ObjectID) (entities.Invoice, error)
+	GetInvoices(userid primitive.ObjectID) []entities.Invoice
 	GetAllInvoices() []entities.Invoice
-	ChangeStatus(invoiceid string, status int) error
+	ChangeStatus(invoiceid primitive.ObjectID, status int) error
 }

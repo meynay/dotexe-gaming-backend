@@ -6,6 +6,7 @@ import (
 	"store/internal/entities"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -25,12 +26,12 @@ func (cr *CommentRep) AddComment(c entities.Comment) error {
 	return nil
 }
 
-func (cr *CommentRep) GetComments(productid string) ([]entities.Comment, error) {
+func (cr *CommentRep) GetComments(productid primitive.ObjectID) ([]entities.Comment, error) {
 	var comments []entities.Comment
 	res, err := cr.rep.Find(context.TODO(), bson.M{"product_id": productid})
 	if err != nil {
 		return comments, fmt.Errorf("couldn't find comments on product")
 	}
-	res.Decode(&comments)
+	res.All(context.TODO(), &comments)
 	return comments, nil
 }

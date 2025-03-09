@@ -7,6 +7,8 @@ import (
 	"store/internal/repositories/product_rep"
 	"store/pkg"
 	"strings"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ProductUseCase struct {
@@ -18,7 +20,7 @@ func NewProductUseCase(r *product_rep.ProductRep, cr *category_rep.CategoryRep) 
 	return &ProductUseCase{rep: r, categoryrep: cr}
 }
 
-func (pu *ProductUseCase) GetProduct(ID string) (entities.Product, error) {
+func (pu *ProductUseCase) GetProduct(ID primitive.ObjectID) (entities.Product, error) {
 	err := pu.rep.AddViewToProduct(ID)
 	if err != nil {
 		return entities.Product{}, err
@@ -60,7 +62,8 @@ func (pu *ProductUseCase) FilterProducts(filter entities.Filter) ([]entities.Pro
 	if err != nil {
 		return p, 0, err
 	}
-	if filter.CategoryID != "" {
+	z, _ := primitive.ObjectIDFromHex("0")
+	if filter.CategoryID != z {
 		newproducts := []entities.Product{}
 		for _, product := range products {
 			if product.CategoryID == filter.CategoryID || pkg.Exists(filter.CategoryID, pu.categoryrep.GetParents(product.CategoryID)) {
@@ -131,4 +134,8 @@ func (pu *ProductUseCase) FilterProducts(filter entities.Filter) ([]entities.Pro
 		start++
 	}
 	return p, pages, nil
+}
+
+func (pu *ProductUseCase) GetCategories() []entities.Category {
+	return pu.categoryrep.GetCategories()
 }

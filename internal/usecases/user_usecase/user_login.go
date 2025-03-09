@@ -6,6 +6,8 @@ import (
 	"store/internal/repositories/user_rep"
 	"store/pkg"
 	"store/pkg/cacher"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 const (
@@ -52,56 +54,60 @@ func (u *UserUsecase) FirstAttempt(inp string) (int, string) {
 	return LoginWithEmail, "login with email"
 }
 
-func (u *UserUsecase) LoginWithEmail(email, password string) (string, error) {
+func (u *UserUsecase) LoginWithEmail(email, password string) (primitive.ObjectID, error) {
 	user, err := u.userRep.CheckUser(email, password)
+	z, _ := primitive.ObjectIDFromHex("0")
 	if err != nil {
-		return "", err
+		return z, err
 	}
 	return user.ID, nil
 }
 
-func (u *UserUsecase) LoginWithPhone(phone, code string) (string, error) {
+func (u *UserUsecase) LoginWithPhone(phone, code string) (primitive.ObjectID, error) {
+	z, _ := primitive.ObjectIDFromHex("0")
 	result, err := u.cache.CheckCode(phone, code)
 	if err != nil {
-		return "", err
+		return z, err
 	}
 	if !result {
-		return "", fmt.Errorf("wrong code")
+		return z, fmt.Errorf("wrong code")
 	}
 	user, err := u.userRep.GetUserByPhone(phone)
 	if err != nil {
-		return "", err
+		return z, err
 	}
 	return user.ID, nil
 }
 
-func (u *UserUsecase) SignupWithEmail(email, password string) (string, error) {
+func (u *UserUsecase) SignupWithEmail(email, password string) (primitive.ObjectID, error) {
 	user, err := u.userRep.InsertUserByEmail(email, password)
+	z, _ := primitive.ObjectIDFromHex("0")
 	if err != nil {
-		return "", err
+		return z, err
 	}
 	return user.ID, nil
 }
 
-func (u *UserUsecase) SignupWithPhone(phone, code string) (string, error) {
+func (u *UserUsecase) SignupWithPhone(phone, code string) (primitive.ObjectID, error) {
 	result, err := u.cache.CheckCode(phone, code)
+	z, _ := primitive.ObjectIDFromHex("0")
 	if err != nil {
-		return "", err
+		return z, err
 	}
 	if !result {
-		return "", fmt.Errorf("wrong code")
+		return z, fmt.Errorf("wrong code")
 	}
 	user, err := u.userRep.InsertUserByPhone(phone)
 	if err != nil {
-		return "", err
+		return z, err
 	}
 	return user.ID, nil
 }
 
-func (u *UserUsecase) SaveToken(id, token string) error {
+func (u *UserUsecase) SaveToken(id primitive.ObjectID, token string) error {
 	return u.userRep.SaveToken(id, token)
 }
 
-func (u *UserUsecase) TokenExists(id, token string) bool {
+func (u *UserUsecase) TokenExists(id primitive.ObjectID, token string) bool {
 	return u.userRep.TokenExists(id, token) == nil
 }

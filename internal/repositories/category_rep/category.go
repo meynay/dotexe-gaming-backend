@@ -3,9 +3,11 @@ package category_rep
 import (
 	"context"
 	"fmt"
+	"log"
 	"store/internal/entities"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -18,10 +20,12 @@ func NewCategoryRep(crep *mongo.Collection) *CategoryRep {
 }
 
 func (cr *CategoryRep) AddCategory(c entities.Category) error {
-	_, err := cr.rep.InsertOne(context.TODO(), c)
+	res, err := cr.rep.InsertOne(context.TODO(), c)
 	if err != nil {
 		return fmt.Errorf("couldn't insert category")
 	}
+
+	log.Printf("Category %s added with id %v\n", c.Name, res.InsertedID)
 	return nil
 }
 
@@ -30,18 +34,20 @@ func (cr *CategoryRep) EditCategory(c entities.Category) error {
 	if err != nil {
 		return fmt.Errorf("couldn't update category")
 	}
+	log.Printf("Category with id %s edited to name: %s \tand image: %s\n", c.ID, c.Name, c.Image)
 	return nil
 }
 
-func (cr *CategoryRep) DeleteCategory(id string) error {
+func (cr *CategoryRep) DeleteCategory(id primitive.ObjectID) error {
 	_, err := cr.rep.DeleteOne(context.TODO(), bson.M{"_id": id})
 	if err != nil {
 		return fmt.Errorf("couldn't delete category")
 	}
+	log.Printf("Category with id %s deleted\n", id)
 	return nil
 }
 
-func (cr *CategoryRep) GetCategory(id string) (entities.Category, error) {
+func (cr *CategoryRep) GetCategory(id primitive.ObjectID) (entities.Category, error) {
 	result := cr.rep.FindOne(context.TODO(), bson.M{"_id": id})
 	if result.Err() != nil {
 		return entities.Category{}, fmt.Errorf("couldn't find category")
@@ -53,20 +59,21 @@ func (cr *CategoryRep) GetCategory(id string) (entities.Category, error) {
 
 func (cr *CategoryRep) GetCategories() []entities.Category {
 	categories := []entities.Category{}
-	result, err := cr.rep.Find(context.TODO(), bson.M{})
+	result, err := cr.rep.Find(context.TODO(), bson.D{})
 	if err != nil {
 		return categories
 	}
-	result.Decode(&categories)
+	result.All(context.TODO(), &categories)
 	return categories
 }
 
-func (cr *CategoryRep) GetParents(ID string) []string {
-	parents := []string{}
+func (cr *CategoryRep) GetParents(ID primitive.ObjectID) []primitive.ObjectID {
+	parents := []primitive.ObjectID{}
 	res := cr.rep.FindOne(context.TODO(), bson.M{"_id": ID})
 	var c entities.Category
 	res.Decode(&c)
-	for c.ParentID != "" {
+	z, _ := primitive.ObjectIDFromHex("0")
+	for c.ParentID != z {
 		parents = append(parents, c.ParentID)
 		res = cr.rep.FindOne(context.TODO(), bson.M{"_id": c.ParentID})
 		res.Decode(&c)

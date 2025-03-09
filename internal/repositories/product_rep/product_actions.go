@@ -6,9 +6,10 @@ import (
 	"store/internal/entities"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (pr *ProductRep) AddRatingToProduct(rate float64, ID string) error {
+func (pr *ProductRep) AddRatingToProduct(rate float64, ID primitive.ObjectID) error {
 	product := entities.Product{}
 	res := pr.prdb.FindOne(context.TODO(), bson.M{"_id": ID})
 	if res.Err() != nil {
@@ -23,7 +24,7 @@ func (pr *ProductRep) AddRatingToProduct(rate float64, ID string) error {
 	return nil
 }
 
-func (pr *ProductRep) ChangeProductRating(oldRate, newRate float64, ID string) error {
+func (pr *ProductRep) ChangeProductRating(oldRate, newRate float64, ID primitive.ObjectID) error {
 	product := entities.Product{}
 	res := pr.prdb.FindOne(context.TODO(), bson.M{"_id": ID})
 	if res.Err() != nil {
@@ -37,7 +38,7 @@ func (pr *ProductRep) ChangeProductRating(oldRate, newRate float64, ID string) e
 	return nil
 }
 
-func (pr *ProductRep) AddPurchaseCount(count int, ID string) error {
+func (pr *ProductRep) AddPurchaseCount(count int, ID primitive.ObjectID) error {
 	product := entities.Product{}
 	res := pr.prdb.FindOne(context.TODO(), bson.M{"_id": ID})
 	if res.Err() != nil {
@@ -49,7 +50,7 @@ func (pr *ProductRep) AddPurchaseCount(count int, ID string) error {
 	return nil
 }
 
-func (pr *ProductRep) AddViewToProduct(ID string) error {
+func (pr *ProductRep) AddViewToProduct(ID primitive.ObjectID) error {
 	product := entities.Product{}
 	res := pr.prdb.FindOne(context.TODO(), bson.M{"_id": ID})
 	if res.Err() != nil {

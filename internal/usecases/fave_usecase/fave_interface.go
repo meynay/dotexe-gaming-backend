@@ -1,10 +1,14 @@
 package fave_usecase
 
-import "store/internal/entities"
+import (
+	"store/internal/entities"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type FaveUsecaseI interface {
-	FaveProduct(userid, productid string) error
-	UnfaveProduct(userid, productid string) error
-	CheckFave(userid, productid string) error
-	GetFaves(userid string) []entities.ProductLess
+	FaveProduct(userid, productid primitive.ObjectID) error
+	UnfaveProduct(userid, productid primitive.ObjectID) error
+	CheckFave(userid, productid primitive.ObjectID) error
+	GetFaves(userid primitive.ObjectID) []entities.ProductLess
 }

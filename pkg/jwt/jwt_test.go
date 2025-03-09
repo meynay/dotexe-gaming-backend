@@ -5,12 +5,13 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/assert"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func TestJWT(t *testing.T) {
 	secret := "123456"
 	j := jwt.NewJWTTokenHandler(secret)
-	id := "123bsa2"
+	id, _ := primitive.ObjectIDFromHex("3a1b3ba52817")
 	at, rt, err := j.GenerateJWT(id)
 	assert.Nil(t, err, "error should be nil")
 	id2, err := j.ValidateJWT(at)

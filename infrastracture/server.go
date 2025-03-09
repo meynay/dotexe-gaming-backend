@@ -51,27 +51,6 @@ func StartServer() {
 	fmt.Println("Connected to MongoDB!")
 
 	jwtsecret := os.Getenv("JWT_SECRET")
-
-	router := gin.Default()
-	//common middlewares
-	router.Use(gin.Logger())
-	router.Use(gin.Recovery())
-	router.Use(middlewares.SecurityHeaders())
-	//router.Use(middlewares.RateLimiter())
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Content-Type", "Authorizaion"},
-		AllowCredentials: true,
-		MaxAge:           12 * time.Hour,
-	}))
-	//router.Use(middlewares.APIKeyAuth())
-	router.Use(gzip.Gzip(gzip.BestCompression))
-	cacher := cacher.NewCacher(os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PASS"))
-	router.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{"Message": "app works"})
-	})
-
 	//collections
 	database := client.Database("store")
 	userCollection := database.Collection("user")
@@ -92,12 +71,13 @@ func StartServer() {
 	adminRep := admin_rep.NewAdminRep(adminCollection)
 
 	//usecases
+	cacher := cacher.NewCacher(os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PASS"))
 	userUsercase := user_usecase.NewUserUsecase(userRep, cacher)
 	productUsecase := product_usecase.NewProductUseCase(productRep, categoryRep)
 	faveUsecase := fave_usecase.NewFaveUsecase(userRep, productRep, categoryRep)
 	commentUsecase := comment_usecase.NewCommentUsecase(commentsRep, userRep)
 	ratingUsecase := rating_usecase.NewRatingUsecase(ratingRep, productRep, userRep)
-	adminUsecase := admin_usecase.NewAdminUsecase(productRep, categoryRep, invoiceRep, adminRep)
+	adminUsecase := admin_usecase.NewAdminUsecase(productRep, categoryRep, invoiceRep, adminRep, userRep)
 
 	//deliveries
 	j := jwt.NewJWTTokenHandler(jwtsecret)
@@ -108,6 +88,26 @@ func StartServer() {
 	commentDelivery := comment_delivery.NewCommentDelivery(commentUsecase)
 	ratingDelivery := rating_delivery.NewRatingDelivery(ratingUsecase)
 
+	router := gin.Default()
+	//common middlewares
+	router.Use(gin.Logger())
+	router.Use(gin.Recovery())
+	router.Use(middlewares.SecurityHeaders())
+	//router.Use(middlewares.RateLimiter())
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		AllowCredentials: true,
+		MaxAge:           12 * time.Hour,
+	}))
+	//router.Use(middlewares.APIKeyAuth())
+	router.Use(gzip.Gzip(gzip.BestCompression))
+
+	router.GET("/", func(c *gin.Context) {
+		c.JSON(200, gin.H{"Message": "app works"})
+	})
+
 	//public group
 	public := router.Group("/public-api")
 	public.POST("/signin", userDelivery.FirstStep)
@@ -116,11 +116,12 @@ func StartServer() {
 	public.POST("/signupphone", userDelivery.SignupWithPhone)
 	public.POST("/signupemail", userDelivery.SignupWithEmail)
 	public.POST("/refreshtoken", userDelivery.RefreshToken)
-	public.GET("/getproduct/:id", productDelivery.GetProduct)
-	public.GET("/getproducts", productDelivery.GetProducts)
+	public.GET("/product/:id", productDelivery.GetProduct)
+	public.GET("/products", productDelivery.GetProducts)
+	public.GET("/categories", productDelivery.GetCategories)
 	public.GET("/query", productDelivery.SearchQuery)
-	public.GET("/getcomments/:id", commentDelivery.GetComments)
-	public.GET("/getrates/:id", ratingDelivery.GetRates)
+	public.GET("/comments/:id", commentDelivery.GetComments)
+	public.GET("/rates/:id", ratingDelivery.GetRates)
 
 	//private group (needs auth)
 	private := router.Group("/private-api")
@@ -132,8 +133,11 @@ func StartServer() {
 	private.DELETE("unfaveproduct/:id", faveDelivery.UnfaveProduct)
 
 	//private.Use(middlewares.CSRFMiddleware())
-	admin := router.Group(os.Getenv("ADMIN_ROUTE"))
-	admin.Use()
+
+	//admin group
+	adminroute := os.Getenv("ADMIN_ROUTE")
+	admin := router.Group(adminroute)
+	//admin.Use()
 	admin.POST("/addproduct", adminDelivery.AddProduct)
 	admin.POST("/addcategory", adminDelivery.AddCategory)
 	admin.DELETE("/deleteproduct/:id", adminDelivery.DeleteProduct)

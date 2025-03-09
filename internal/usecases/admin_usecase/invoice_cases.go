@@ -3,6 +3,8 @@ package admin_usecase
 import (
 	"sort"
 	"store/internal/entities"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (au *AdminUsecase) GetInvoices(filter entities.InvoiceFilter) []entities.Invoice {
@@ -30,7 +32,7 @@ func (au *AdminUsecase) GetInvoices(filter entities.InvoiceFilter) []entities.In
 	return invoices[from:to]
 }
 
-func (au *AdminUsecase) GetInvoice(id string) (string, entities.Invoice, error) {
+func (au *AdminUsecase) GetInvoice(id primitive.ObjectID) (string, entities.Invoice, error) {
 	invoice, err := au.invoicerep.GetInvoice(id)
 	if err != nil {
 		return "", invoice, err
@@ -38,6 +40,6 @@ func (au *AdminUsecase) GetInvoice(id string) (string, entities.Invoice, error) 
 	return au.userrep.GetUsername(invoice.UserID), invoice, nil
 }
 
-func (au *AdminUsecase) ChangeInvoiceStatus(invoiceid string, status int) error {
+func (au *AdminUsecase) ChangeInvoiceStatus(invoiceid primitive.ObjectID, status int) error {
 	return au.invoicerep.ChangeStatus(invoiceid, status)
 }

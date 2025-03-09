@@ -1,15 +1,19 @@
 package entities
 
-import "time"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Admin struct {
-	ID        string `json:"_id"`
-	Phone     string `json:"phone_number"`
-	Password  string `json:"password"`
-	FirstName string `json:"firstname"`
-	LastName  string `json:"lastname"`
-	Image     string `json:"image"`
-	Bio       string `json:"bio"`
+	ID        primitive.ObjectID `json:"_id" bson:"_id"`
+	Phone     string             `json:"phone_number" bson:"phone_number"`
+	Password  string             `json:"password" bson:"password"`
+	FirstName string             `json:"firstname" bson:"firstname"`
+	LastName  string             `json:"lastname" bson:"lastname"`
+	Image     string             `json:"image" bson:"image"`
+	Bio       string             `json:"bio" bson:"bio"`
 }
 
 type ChartFilter struct {

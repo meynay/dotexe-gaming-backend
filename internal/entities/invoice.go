@@ -1,25 +1,29 @@
 package entities
 
-import "time"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Item struct {
-	ProductID string  `json:"product_id"`
-	Count     int     `json:"count"`
-	Price     int     `json:"price"`
-	Off       float64 `json:"off"`
+	ProductID primitive.ObjectID `json:"product_id" bson:"product_id"`
+	Count     int                `json:"count" bson:"count"`
+	Price     int                `json:"price" bson:"price"`
+	Off       float64            `json:"off" bson:"off"`
 }
 
 type Invoice struct {
-	ID            string    `json:"_id"`
-	UserID        string    `json:"user_id"`
-	InvoiceDate   time.Time `json:"date"`
-	OrderStatus   int       `json:"order_status"`
-	Items         []Item    `json:"items"`
-	DeliveryPrice int       `json:"delivery_price"`
-	CouponApplied bool      `json:"coupon_applied"`
-	CouponOff     float64   `json:"coupon_off"`
-	CouponPrice   int       `json:"coupon_price"`
-	TotalPrice    int       `json:"total"`
+	ID            primitive.ObjectID `json:"_id" bson:"_id"`
+	UserID        primitive.ObjectID `json:"user_id" bson:"user_id"`
+	InvoiceDate   time.Time          `json:"date" bson:"date"`
+	OrderStatus   int                `json:"order_status" bson:"order_status"`
+	Items         []Item             `json:"items" bson:"items"`
+	DeliveryPrice int                `json:"delivery_price" bson:"delivery_price"`
+	CouponApplied bool               `json:"coupon_applied" bson:"coupon_applied"`
+	CouponOff     float64            `json:"coupon_off" bson:"coupon_off"`
+	CouponPrice   int                `json:"coupon_price" bson:"coupon_price"`
+	TotalPrice    int                `json:"total" bson:"total"`
 }
 
 type InvoiceFilter struct {

@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type JWTTokenHandler struct {
@@ -15,7 +16,7 @@ func NewJWTTokenHandler(secret string) *JWTTokenHandler {
 }
 
 // generates both access token and refresh token
-func (j *JWTTokenHandler) GenerateJWT(id string) (accessToken string, refreshToken string, err error) {
+func (j *JWTTokenHandler) GenerateJWT(id primitive.ObjectID) (accessToken string, refreshToken string, err error) {
 	//generates access token
 	accessClaims := jwt.MapClaims{
 		"id":  id,
@@ -39,16 +40,17 @@ func (j *JWTTokenHandler) GenerateJWT(id string) (accessToken string, refreshTok
 }
 
 // checks if token is valid
-func (j *JWTTokenHandler) ValidateJWT(tokenString string) (string, error) {
+func (j *JWTTokenHandler) ValidateJWT(tokenString string) (primitive.ObjectID, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return j.secret, nil
 	})
+	z, _ := primitive.ObjectIDFromHex("")
 	if err != nil {
-		return "", err
+		return z, err
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		id := claims["id"].(string)
+		id := claims["id"].(primitive.ObjectID)
 		return id, nil
 	}
-	return "", jwt.ErrSignatureInvalid
+	return z, jwt.ErrSignatureInvalid
 }

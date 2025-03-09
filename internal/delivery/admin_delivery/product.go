@@ -5,6 +5,7 @@ import (
 	"store/internal/entities"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (ad *AdminDelivery) AddProduct(c *gin.Context) {
@@ -36,7 +37,7 @@ func (ad *AdminDelivery) EditProduct(c *gin.Context) {
 }
 
 func (ad *AdminDelivery) DeleteProduct(c *gin.Context) {
-	id := c.Param("id")
+	id, _ := primitive.ObjectIDFromHex(c.Param("id"))
 	err := ad.adminusecase.DeleteProduct(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})

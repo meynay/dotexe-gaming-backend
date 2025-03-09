@@ -5,6 +5,7 @@ import (
 	"store/internal/usecases/fave_usecase"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type FaveDelivery struct {
@@ -16,7 +17,7 @@ func NewFaveDelivery(fu *fave_usecase.FaveUsecase) *FaveDelivery {
 }
 
 func (fd *FaveDelivery) FaveProduct(c *gin.Context) {
-	productid := c.Param("id")
+	productid, _ := primitive.ObjectIDFromHex(c.Param("id"))
 	userid, exists := c.Get("id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
@@ -26,7 +27,8 @@ func (fd *FaveDelivery) FaveProduct(c *gin.Context) {
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 	}
-	err := fd.faveusecase.FaveProduct(userID, productid)
+	userd, _ := primitive.ObjectIDFromHex(userID)
+	err := fd.faveusecase.FaveProduct(userd, productid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 	}
@@ -34,7 +36,7 @@ func (fd *FaveDelivery) FaveProduct(c *gin.Context) {
 }
 
 func (fd *FaveDelivery) UnfaveProduct(c *gin.Context) {
-	productid := c.Param("id")
+	productid, _ := primitive.ObjectIDFromHex(c.Param("id"))
 	userid, exists := c.Get("id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
@@ -44,7 +46,8 @@ func (fd *FaveDelivery) UnfaveProduct(c *gin.Context) {
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 	}
-	err := fd.faveusecase.UnfaveProduct(userID, productid)
+	userd, _ := primitive.ObjectIDFromHex(userID)
+	err := fd.faveusecase.UnfaveProduct(userd, productid)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 	}
@@ -52,7 +55,7 @@ func (fd *FaveDelivery) UnfaveProduct(c *gin.Context) {
 }
 
 func (fd *FaveDelivery) CheckFave(c *gin.Context) {
-	productid := c.Param("id")
+	productid, _ := primitive.ObjectIDFromHex(c.Param("id"))
 	userid, exists := c.Get("id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
@@ -62,7 +65,8 @@ func (fd *FaveDelivery) CheckFave(c *gin.Context) {
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 	}
-	err := fd.faveusecase.CheckFave(userID, productid)
+	userd, _ := primitive.ObjectIDFromHex(userID)
+	err := fd.faveusecase.CheckFave(userd, productid)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "product is not in user faves"})
 		return
@@ -80,6 +84,7 @@ func (fd *FaveDelivery) GetFaves(c *gin.Context) {
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 	}
-	faves := fd.faveusecase.GetFaves(userID)
+	userd, _ := primitive.ObjectIDFromHex(userID)
+	faves := fd.faveusecase.GetFaves(userd)
 	c.JSON(http.StatusOK, faves)
 }

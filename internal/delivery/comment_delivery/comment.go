@@ -5,6 +5,7 @@ import (
 	"store/internal/usecases/comment_usecase"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type CommentDelivery struct {
@@ -20,7 +21,7 @@ func (cd *CommentDelivery) CommentOnProduct(c *gin.Context) {
 }
 
 func (cd *CommentDelivery) GetComments(c *gin.Context) {
-	productid := c.Param("id")
+	productid, _ := primitive.ObjectIDFromHex(c.Param("id"))
 	out := cd.commentusecase.GetComments(productid)
 	c.JSON(http.StatusOK, out)
 }

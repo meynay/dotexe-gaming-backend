@@ -1,20 +1,24 @@
 package entities
 
-import "time"
+import (
+	"time"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type Comment struct {
-	ID        string    `json:"_id"`
-	Parent    string    `json:"parent"`
-	ProductID string    `json:"product_id"`
-	UserID    string    `json:"user_id"`
-	Comment   string    `json:"comment"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        primitive.ObjectID `json:"_id" bson:"_id"`
+	Parent    primitive.ObjectID `json:"parent" bson:"parent"`
+	ProductID primitive.ObjectID `json:"product_id" bson:"product_id"`
+	UserID    primitive.ObjectID `json:"user_id" bson:"user_id"`
+	Comment   string             `json:"comment" bson:"comment"`
+	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
 }
 
 type CommentOut struct {
-	ID        string    `json:"_id"`
-	Parent    string    `json:"parent"`
-	User      string    `json:"user"`
-	Comment   string    `json:"comment"`
-	CreatedAt time.Time `json:"created_at"`
+	ID        primitive.ObjectID `json:"_id"`
+	Parent    primitive.ObjectID `json:"parent"`
+	User      string             `json:"user"`
+	Comment   string             `json:"comment"`
+	CreatedAt time.Time          `json:"created_at"`
 }

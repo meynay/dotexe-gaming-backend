@@ -4,6 +4,8 @@ import (
 	"store/internal/entities"
 	"store/internal/repositories/comment_rep"
 	"store/internal/repositories/user_rep"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type CommentUsecase struct {
@@ -19,7 +21,7 @@ func (cu *CommentUsecase) CommentOnProduct(c entities.Comment) error {
 	return cu.commentrep.AddComment(c)
 }
 
-func (cu *CommentUsecase) GetComments(productid string) []entities.CommentOut {
+func (cu *CommentUsecase) GetComments(productid primitive.ObjectID) []entities.CommentOut {
 	cmnt, err := cu.commentrep.GetComments(productid)
 	comments := []entities.CommentOut{}
 	if err != nil {

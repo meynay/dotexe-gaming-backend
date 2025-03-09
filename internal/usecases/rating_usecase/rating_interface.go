@@ -1,8 +1,12 @@
 package rating_usecase
 
-import "store/internal/entities"
+import (
+	"store/internal/entities"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type RatingUsecaseI interface {
 	RateProduct(r entities.Rating) error
-	GetRates(productid string) []entities.RatingOut
+	GetRates(productid primitive.ObjectID) []entities.RatingOut
 }

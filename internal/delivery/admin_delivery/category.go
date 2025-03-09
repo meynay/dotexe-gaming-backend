@@ -5,16 +5,19 @@ import (
 	"store/internal/entities"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (ad *AdminDelivery) AddCategory(c *gin.Context) {
 	category := entities.Category{}
-	if c.BindJSON(&category) != nil {
+	if err := c.BindJSON(&category); err != nil {
+		c.Error(err)
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad json format"})
 		return
 	}
 	err := ad.adminusecase.AddCategory(category)
 	if err != nil {
+		c.Error(err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
@@ -36,7 +39,7 @@ func (ad *AdminDelivery) EditCategory(c *gin.Context) {
 }
 
 func (ad *AdminDelivery) DeleteCategory(c *gin.Context) {
-	id := c.Param("id")
+	id, _ := primitive.ObjectIDFromHex(c.Param("id"))
 	err := ad.adminusecase.DeleteCategory(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err})

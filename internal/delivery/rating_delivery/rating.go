@@ -5,6 +5,7 @@ import (
 	"store/internal/usecases/rating_usecase"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type RatingDelivery struct {
@@ -20,7 +21,7 @@ func (rd *RatingDelivery) RateProduct(c *gin.Context) {
 }
 
 func (rd *RatingDelivery) GetRates(c *gin.Context) {
-	productid := c.Param("id")
+	productid, _ := primitive.ObjectIDFromHex(c.Param("id"))
 	out := rd.ratingusecase.GetRates(productid)
 	c.JSON(http.StatusOK, out)
 }

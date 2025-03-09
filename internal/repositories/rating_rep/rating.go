@@ -6,6 +6,7 @@ import (
 	"store/internal/entities"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -36,7 +37,7 @@ func (rr *RatingRep) ChangeRating(rating entities.Rating) error {
 	return nil
 }
 
-func (rr *RatingRep) GetRating(userid, productid string) (entities.Rating, error) {
+func (rr *RatingRep) GetRating(userid, productid primitive.ObjectID) (entities.Rating, error) {
 	res := rr.rep.FindOne(context.TODO(), bson.M{"user_id": userid, "product_id": productid})
 	if res.Err() != nil {
 		return entities.Rating{}, res.Err()
@@ -46,12 +47,12 @@ func (rr *RatingRep) GetRating(userid, productid string) (entities.Rating, error
 	return r, nil
 }
 
-func (rr *RatingRep) GetRatings(productid string) []entities.Rating {
+func (rr *RatingRep) GetRatings(productid primitive.ObjectID) []entities.Rating {
 	var rates []entities.Rating
 	res, err := rr.rep.Find(context.TODO(), bson.M{"product_id": productid})
 	if err != nil {
 		return rates
 	}
-	res.Decode(&rates)
+	res.All(context.TODO(), &rates)
 	return rates
 }

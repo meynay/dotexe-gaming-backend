@@ -1,6 +1,10 @@
 package user_rep
 
-import "store/internal/entities"
+import (
+	"store/internal/entities"
+
+	"go.mongodb.org/mongo-driver/bson/primitive"
+)
 
 type UserRepositoryI interface {
 	//login-signup
@@ -9,18 +13,18 @@ type UserRepositoryI interface {
 	GetUserByPhone(phone string) (*entities.User, error)
 	GetUserByEmail(email string) (*entities.User, error)
 	CheckUser(email, password string) (*entities.User, error)
-	SaveToken(userID, token string) error
+	SaveToken(userID primitive.ObjectID, token string) error
 
 	//faves
-	AddToFaves(productid, userid string) error
-	DeleteFromFaves(productid, userid string) error
-	CheckFave(productid, userid string) error
-	GetFaves(userid string) []string
+	AddToFaves(productid, userid primitive.ObjectID) error
+	DeleteFromFaves(productid, userid primitive.ObjectID) error
+	CheckFave(productid, userid primitive.ObjectID) error
+	GetFaves(userid primitive.ObjectID) []primitive.ObjectID
 
 	//cart
-	AddToCart(productid, userid string) error
-	IsInCart(productid, userid string) (int, error)
-	DeleteFromCart(productid, userid string, count int) error
-	GetCart(userid string) []entities.Item
-	FinalizeCart(userid string) []entities.Item
+	AddToCart(productid, userid primitive.ObjectID) error
+	IsInCart(productid, userid primitive.ObjectID) (int, error)
+	DeleteFromCart(productid, userid primitive.ObjectID, count int) error
+	GetCart(userid primitive.ObjectID) []entities.Item
+	FinalizeCart(userid primitive.ObjectID) []entities.Item
 }

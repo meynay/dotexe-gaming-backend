@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -23,7 +24,7 @@ func (r *UserRepository) InsertUserByPhone(phone string) (*entities.User, error)
 	user := entities.User{
 		Phone:     phone,
 		CreatedAt: time.Now(),
-		Faves:     []string{},
+		Faves:     []primitive.ObjectID{},
 		Cart:      []entities.Item{},
 	}
 	_, err := r.db.InsertOne(context.TODO(), user)
@@ -42,7 +43,7 @@ func (r *UserRepository) InsertUserByEmail(email, password string) (*entities.Us
 		Email:     email,
 		Password:  password,
 		CreatedAt: time.Now(),
-		Faves:     []string{},
+		Faves:     []primitive.ObjectID{},
 		Cart:      []entities.Item{},
 	}
 	_, err = r.db.InsertOne(context.TODO(), user)
@@ -82,7 +83,7 @@ func (r *UserRepository) CheckUser(email, password string) (*entities.User, erro
 	return &user, nil
 }
 
-func (r *UserRepository) SaveToken(userID, token string) error {
+func (r *UserRepository) SaveToken(userID primitive.ObjectID, token string) error {
 	_, err := r.db.UpdateOne(
 		context.TODO(),
 		bson.M{"_id": userID},
@@ -91,7 +92,7 @@ func (r *UserRepository) SaveToken(userID, token string) error {
 	return err
 }
 
-func (r *UserRepository) TokenExists(userID, token string) error {
+func (r *UserRepository) TokenExists(userID primitive.ObjectID, token string) error {
 	var user entities.User
 	err := r.db.FindOne(context.TODO(), bson.M{"_id": userID, "refresh_token": token}).Decode(&user)
 	return err

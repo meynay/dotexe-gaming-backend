@@ -6,6 +6,7 @@ import (
 	"store/internal/entities"
 
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -24,7 +25,7 @@ func (pr *ProductRep) AddProduct(p entities.Product) error {
 	}
 	return nil
 }
-func (pr *ProductRep) GetProduct(ID string) (entities.Product, error) {
+func (pr *ProductRep) GetProduct(ID primitive.ObjectID) (entities.Product, error) {
 	res := pr.prdb.FindOne(context.TODO(), bson.M{
 		"_id": ID,
 	})
@@ -43,7 +44,7 @@ func (pr *ProductRep) GetProducts() ([]entities.Product, error) {
 	if err != nil {
 		return products, fmt.Errorf("couldn't get products")
 	}
-	if cur.Decode(&products) != nil {
+	if cur.All(context.TODO(), &products) != nil {
 		return products, fmt.Errorf("couldn't decode products")
 	}
 	return products, nil
@@ -59,7 +60,7 @@ func (pr *ProductRep) EditProduct(p entities.Product) error {
 	return nil
 }
 
-func (pr *ProductRep) DeleteProduct(ID string) error {
+func (pr *ProductRep) DeleteProduct(ID primitive.ObjectID) error {
 	_, err := pr.prdb.DeleteOne(context.TODO(), bson.M{"_id": ID})
 	if err != nil {
 		return fmt.Errorf("couldn't delete product")

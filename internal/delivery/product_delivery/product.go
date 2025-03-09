@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ProductDelivery struct {
@@ -18,7 +19,7 @@ func NewProductDelivery(u *product_usecase.ProductUseCase) *ProductDelivery {
 }
 
 func (pd *ProductDelivery) GetProduct(c *gin.Context) {
-	productid := c.Param("id")
+	productid, _ := primitive.ObjectIDFromHex(c.Param("id"))
 	product, err := pd.pu.GetProduct(productid)
 	if err.Error() == "couldn't find product" {
 		c.JSON(http.StatusNotFound, gin.H{"message": "no products found with given id"})
@@ -32,7 +33,7 @@ func (pd *ProductDelivery) GetProduct(c *gin.Context) {
 
 func (pd *ProductDelivery) GetProducts(c *gin.Context) {
 	query := c.Query("query")
-	categoryid := c.Query("categoryid")
+	categoryid, _ := primitive.ObjectIDFromHex(c.Query("categoryid"))
 	page, err := strconv.Atoi(c.Query("page"))
 	if err != nil {
 		page = 1
@@ -73,4 +74,9 @@ func (pd *ProductDelivery) SearchQuery(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"products": products, "categories": categories})
+}
+
+func (pd *ProductDelivery) GetCategories(c *gin.Context) {
+	categories := pd.pu.GetCategories()
+	c.JSON(http.StatusOK, categories)
 }
