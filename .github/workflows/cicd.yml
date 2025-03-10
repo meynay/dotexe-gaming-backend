@@ -29,7 +29,8 @@ jobs:
 
       - name: deploy
         run: |
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo systemctl stop gameexe.service"
           scp -o StrictHostKeyChecking=no game.exe ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_DIR }}/game.exe
           ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "chmod +x ${{ secrets.DEPLOY_DIR }}/game.exe"
-          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo systemctl restart gameexe.service"
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo systemctl start gameexe.service"
 
