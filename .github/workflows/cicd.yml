@@ -1,0 +1,35 @@
+name: game.exe backend ci/cd
+
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v3
+
+      - name: setup go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: install dependencies
+        run: go mod tidy
+
+      - name: build app
+        run: go build -o game.exe
+
+      - name: setup ssh
+        uses: webfactory/ssh-agent@v0.7.0
+        with:
+          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+      - name: deploy
+        run: |
+          scp -o StrictHostKeyChecking=no game.exe ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:${{ secrets.DEPLOY_DIR }}/game.exe
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "chmod +x ${{ secrets.DEPLOY_DIR }}/game.exe"
+          ssh -o StrictHostKeyChecking=no ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} "sudo systemctl restart gameexe.service"
+
