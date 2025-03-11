@@ -16,11 +16,11 @@ func NewJWTTokenHandler(secret string) *JWTTokenHandler {
 }
 
 // generates both access token and refresh token
-func (j *JWTTokenHandler) GenerateJWT(id primitive.ObjectID) (accessToken string, refreshToken string, err error) {
+func (j *JWTTokenHandler) GenerateJWT(id primitive.ObjectID, mins int) (accessToken string, refreshToken string, err error) {
 	//generates access token
 	accessClaims := jwt.MapClaims{
 		"id":  id,
-		"exp": time.Now().Add(15 * time.Minute).Unix(),
+		"exp": time.Now().Add(time.Duration(mins) * time.Minute).Unix(),
 	}
 	at := jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims)
 	accessToken, err = at.SignedString(j.secret)

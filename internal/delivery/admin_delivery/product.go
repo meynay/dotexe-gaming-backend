@@ -76,5 +76,5 @@ func (ad *AdminDelivery) DeleteProduct(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
 	}
-	c.JSON(http.StatusInternalServerError, gin.H{"message": "product deleted successfully"})
+	c.JSON(http.StatusOK, gin.H{"message": "product deleted successfully"})
 }

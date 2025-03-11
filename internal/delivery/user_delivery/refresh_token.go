@@ -28,7 +28,7 @@ func (d *UserDelivery) RefreshToken(c *gin.Context) {
 	}
 
 	//generates new access token
-	newAccessToken, _, err := d.generator.GenerateJWT(id)
+	newAccessToken, _, err := d.generator.GenerateJWT(id, 15)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to generate new access token"})
 		return
