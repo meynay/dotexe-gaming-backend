@@ -2,6 +2,7 @@ package comment_usecase
 
 import (
 	"store/internal/entities"
+	"store/internal/repositories/admin_rep"
 	"store/internal/repositories/comment_rep"
 	"store/internal/repositories/user_rep"
 
@@ -11,10 +12,11 @@ import (
 type CommentUsecase struct {
 	commentrep *comment_rep.CommentRep
 	userrep    *user_rep.UserRepository
+	adminrep   *admin_rep.AdminRep
 }
 
-func NewCommentUsecase(cr *comment_rep.CommentRep, ur *user_rep.UserRepository) *CommentUsecase {
-	return &CommentUsecase{commentrep: cr, userrep: ur}
+func NewCommentUsecase(cr *comment_rep.CommentRep, ur *user_rep.UserRepository, ar *admin_rep.AdminRep) *CommentUsecase {
+	return &CommentUsecase{commentrep: cr, userrep: ur, adminrep: ar}
 }
 
 func (cu *CommentUsecase) CommentOnProduct(c entities.Comment) error {
@@ -28,12 +30,23 @@ func (cu *CommentUsecase) GetComments(productid primitive.ObjectID) []entities.C
 		return comments
 	}
 	for _, c := range cmnt {
-		newcomment := entities.CommentOut{
-			ID:        c.ID,
-			Parent:    c.Parent,
-			User:      cu.userrep.GetUsername(c.UserID),
-			Comment:   c.Comment,
-			CreatedAt: c.CreatedAt,
+		newcomment := entities.CommentOut{}
+		if c.IsAdmin {
+			newcomment = entities.CommentOut{
+				ID:        c.ID,
+				Parent:    c.Parent,
+				User:      cu.adminrep.GetName(c.UserID),
+				Comment:   c.Comment,
+				CreatedAt: c.CreatedAt,
+			}
+		} else {
+			newcomment = entities.CommentOut{
+				ID:        c.ID,
+				Parent:    c.Parent,
+				User:      cu.userrep.GetUsername(c.UserID),
+				Comment:   c.Comment,
+				CreatedAt: c.CreatedAt,
+			}
 		}
 		comments = append(comments, newcomment)
 	}

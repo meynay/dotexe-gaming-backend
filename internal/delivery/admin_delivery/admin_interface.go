@@ -3,6 +3,9 @@ package admin_delivery
 import "github.com/gin-gonic/gin"
 
 type AdminDeliveryI interface {
+	Login(c *gin.Context)
+	AddAdmin(c *gin.Context)
+	FillFields(c *gin.Context)
 	//product
 	AddProduct(c *gin.Context)
 	EditProduct(c *gin.Context)

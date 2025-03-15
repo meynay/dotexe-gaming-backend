@@ -24,7 +24,9 @@ type UserRepositoryI interface {
 	//cart
 	AddToCart(productid, userid primitive.ObjectID) error
 	IsInCart(productid, userid primitive.ObjectID) (int, error)
-	DeleteFromCart(productid, userid primitive.ObjectID, count int) error
+	DeleteFromCart(productid, userid primitive.ObjectID) error
+	IncreaseInCart(productid, userid primitive.ObjectID) error
+	DecreaseInCart(productid, userid primitive.ObjectID) error
 	GetCart(userid primitive.ObjectID) []entities.Item
 	FinalizeCart(userid primitive.ObjectID) []entities.Item
 }

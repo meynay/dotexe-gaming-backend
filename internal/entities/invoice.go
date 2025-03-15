@@ -13,6 +13,15 @@ type Item struct {
 	Off       float64            `json:"off" bson:"off"`
 }
 
+type CartItem struct {
+	ProductID   primitive.ObjectID `json:"product_id"`
+	ProductName string             `json:"product_name"`
+	Image       string             `json:"image"`
+	Count       int                `json:"count"`
+	Price       int                `json:"price"`
+	Off         float64            `json:"off"`
+}
+
 type Invoice struct {
 	ID            primitive.ObjectID `json:"_id" bson:"_id"`
 	UserID        primitive.ObjectID `json:"user_id" bson:"user_id"`

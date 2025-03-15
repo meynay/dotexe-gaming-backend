@@ -10,11 +10,11 @@ import (
 
 type UserDelivery struct {
 	uu        *user_usecase.UserUsecase
-	generator jwt.JWTTokenHandler
+	generator *jwt.JWTTokenHandler
 }
 
 func NewUserDelivary(uu *user_usecase.UserUsecase, j *jwt.JWTTokenHandler) *UserDelivery {
-	return &UserDelivery{uu: uu}
+	return &UserDelivery{uu: uu, generator: j}
 }
 
 func (d *UserDelivery) FirstStep(c *gin.Context) {

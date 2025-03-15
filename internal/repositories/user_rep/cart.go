@@ -2,10 +2,12 @@ package user_rep
 
 import (
 	"context"
+	"fmt"
 	"store/internal/entities"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func (ur *UserRepository) AddToCart(productid, userid primitive.ObjectID) error {
@@ -17,20 +19,48 @@ func (ur *UserRepository) AddToCart(productid, userid primitive.ObjectID) error 
 	return nil
 }
 
-func (ur *UserRepository) EditQuantity(productid, userid primitive.ObjectID, asc bool) error {
-	var update bson.M
-	if asc {
-		update = bson.M{}
-	} else {
-		update = bson.M{}
+func (ur *UserRepository) DeleteFromCart(productid, userid primitive.ObjectID) error {
+	_, err := ur.db.UpdateOne(context.TODO(), bson.M{"_id": userid}, bson.M{"$pull": bson.M{"cart": bson.M{"product_id": productid}}})
+	if err != nil {
+		return err
 	}
-
-	ur.db.UpdateOne(context.TODO(), bson.M{"_id": userid, "cart.product_id": productid}, update)
 	return nil
 }
 
 func (ur *UserRepository) IsInCart(productid, userid primitive.ObjectID) (int, error) {
 	return 0, nil
+}
+
+func (ur *UserRepository) IncreaseInCart(productid, userid primitive.ObjectID) error {
+	filter := bson.M{"_id": userid}
+	update := bson.M{
+		"$inc": bson.M{"cart.$[elem].count": 1},
+	}
+	arrayFilters := options.ArrayFilters{
+		Filters: []interface{}{bson.M{"elem.product_id": productid}},
+	}
+	opts := options.Update().SetArrayFilters(arrayFilters)
+	_, err := ur.db.UpdateOne(context.TODO(), filter, update, opts)
+	if err != nil {
+		return fmt.Errorf("failed to update cart: %w", err)
+	}
+	return nil
+}
+
+func (ur *UserRepository) DecreaseInCart(productid, userid primitive.ObjectID) error {
+	filter := bson.M{"_id": userid}
+	update := bson.M{
+		"$inc": bson.M{"cart.$[elem].count": -1},
+	}
+	arrayFilters := options.ArrayFilters{
+		Filters: []interface{}{bson.M{"elem.product_id": productid}},
+	}
+	opts := options.Update().SetArrayFilters(arrayFilters)
+	_, err := ur.db.UpdateOne(context.TODO(), filter, update, opts)
+	if err != nil {
+		return fmt.Errorf("failed to update cart: %w", err)
+	}
+	return nil
 }
 
 func (ur *UserRepository) GetCart(userid primitive.ObjectID) ([]entities.Item, error) {

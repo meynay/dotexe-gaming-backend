@@ -11,6 +11,7 @@ type Comment struct {
 	Parent    primitive.ObjectID `json:"parent" bson:"parent"`
 	ProductID primitive.ObjectID `json:"product_id" bson:"product_id"`
 	UserID    primitive.ObjectID `json:"user_id" bson:"user_id"`
+	IsAdmin   bool               `json:"is_admin" bson:"is_admin"`
 	Comment   string             `json:"comment" bson:"comment"`
 	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
 }

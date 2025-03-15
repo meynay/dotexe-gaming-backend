@@ -75,7 +75,7 @@ func StartServer() {
 	userUsercase := user_usecase.NewUserUsecase(userRep, cacher)
 	productUsecase := product_usecase.NewProductUseCase(productRep, categoryRep)
 	faveUsecase := fave_usecase.NewFaveUsecase(userRep, productRep, categoryRep)
-	commentUsecase := comment_usecase.NewCommentUsecase(commentsRep, userRep)
+	commentUsecase := comment_usecase.NewCommentUsecase(commentsRep, userRep, adminRep)
 	ratingUsecase := rating_usecase.NewRatingUsecase(ratingRep, productRep, userRep)
 	adminUsecase := admin_usecase.NewAdminUsecase(productRep, categoryRep, invoiceRep, adminRep, userRep)
 
@@ -83,7 +83,7 @@ func StartServer() {
 	j := jwt.NewJWTTokenHandler(jwtsecret)
 	userDelivery := user_delivery.NewUserDelivary(userUsercase, j)
 	productDelivery := product_delivery.NewProductDelivery(productUsecase)
-	adminDelivery := admin_delivery.NewAdminDelivery(adminUsecase)
+	adminDelivery := admin_delivery.NewAdminDelivery(adminUsecase, j)
 	faveDelivery := fave_delivery.NewFaveDelivery(faveUsecase)
 	commentDelivery := comment_delivery.NewCommentDelivery(commentUsecase)
 	ratingDelivery := rating_delivery.NewRatingDelivery(ratingUsecase)

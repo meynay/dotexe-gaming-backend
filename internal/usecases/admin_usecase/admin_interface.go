@@ -8,6 +8,12 @@ import (
 )
 
 type AdminUsecaseI interface {
+	//admin
+	AddAdmin(username, password string) error
+	FillFields(admin entities.Admin) error
+	Login(username, password string) (primitive.ObjectID, error)
+	ForgetPassword1(phone string) error
+	ForgetPassword2(phone, code string) error
 	//product
 	AddProduct(product entities.Product) error
 	EditProduct(product entities.Product) error
