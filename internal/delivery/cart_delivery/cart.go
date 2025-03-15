@@ -12,7 +12,7 @@ type CartDelivery struct {
 	usecase *cart_usecase.CartUsecase
 }
 
-func NewCartUsecase(cu *cart_usecase.CartUsecase) *CartDelivery {
+func NewCartDelivery(cu *cart_usecase.CartUsecase) *CartDelivery {
 	return &CartDelivery{usecase: cu}
 }
 
@@ -78,7 +78,6 @@ func (cd *CartDelivery) ChangeCountInCart(c *gin.Context) {
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "decreased product count in cart"})
-	return
 }
 
 func (cd *CartDelivery) IsInCart(c *gin.Context) {
@@ -102,7 +101,20 @@ func (cd *CartDelivery) IsInCart(c *gin.Context) {
 }
 
 func (cd *CartDelivery) GetCart(c *gin.Context) {
-
+	userid, exists := c.Get("id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
+		return
+	}
+	userID, ok := userid.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
+	}
+	userd, _ := primitive.ObjectIDFromHex(userID)
+	cart := cd.usecase.GetCart(userd)
+	c.JSON(http.StatusOK, cart)
 }
 
-func (cd *CartDelivery) FinalizeCart(c *gin.Context)
+func (cd *CartDelivery) FinalizeCart(c *gin.Context) {
+
+}

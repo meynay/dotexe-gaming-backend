@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"store/internal/delivery/admin_delivery"
+	"store/internal/delivery/cart_delivery"
 	"store/internal/delivery/comment_delivery"
 	"store/internal/delivery/fave_delivery"
 	"store/internal/delivery/middlewares"
@@ -19,6 +20,7 @@ import (
 	"store/internal/repositories/rating_rep"
 	"store/internal/repositories/user_rep"
 	"store/internal/usecases/admin_usecase"
+	"store/internal/usecases/cart_usecase"
 	"store/internal/usecases/comment_usecase"
 	"store/internal/usecases/fave_usecase"
 	"store/internal/usecases/product_usecase"
@@ -50,43 +52,45 @@ func StartServer() {
 	}
 	fmt.Println("Connected to MongoDB!")
 
-	jwtsecret := os.Getenv("JWT_SECRET")
 	//collections
 	database := client.Database("store")
-	userCollection := database.Collection("user")
-	productCollection := database.Collection("product")
-	categoryCollection := database.Collection("category")
-	ratesCollection := database.Collection("rating")
-	invoicesCollection := database.Collection("invoice")
-	commentsCollection := database.Collection("comment")
 	adminCollection := database.Collection(os.Getenv("ADMIN_COLLECTION"))
+	categoryCollection := database.Collection("category")
+	commentsCollection := database.Collection("comment")
+	invoicesCollection := database.Collection("invoice")
+	productCollection := database.Collection("product")
+	ratesCollection := database.Collection("rating")
+	userCollection := database.Collection("user")
 
 	//repositories
-	userRep := user_rep.NewUserRepository(userCollection)
-	productRep := product_rep.NewProductRep(productCollection)
-	categoryRep := category_rep.NewCategoryRep(categoryCollection)
-	ratingRep := rating_rep.NewRatingRep(ratesCollection)
-	commentsRep := comment_rep.NewCommentRep(commentsCollection)
-	invoiceRep := invoice_rep.NewInvoiceRep(invoicesCollection)
 	adminRep := admin_rep.NewAdminRep(adminCollection)
+	categoryRep := category_rep.NewCategoryRep(categoryCollection)
+	commentsRep := comment_rep.NewCommentRep(commentsCollection)
+	productRep := product_rep.NewProductRep(productCollection)
+	invoiceRep := invoice_rep.NewInvoiceRep(invoicesCollection)
+	ratingRep := rating_rep.NewRatingRep(ratesCollection)
+	userRep := user_rep.NewUserRepository(userCollection)
 
 	//usecases
 	cacher := cacher.NewCacher(os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PASS"))
-	userUsercase := user_usecase.NewUserUsecase(userRep, cacher)
-	productUsecase := product_usecase.NewProductUseCase(productRep, categoryRep)
-	faveUsecase := fave_usecase.NewFaveUsecase(userRep, productRep, categoryRep)
-	commentUsecase := comment_usecase.NewCommentUsecase(commentsRep, userRep, adminRep)
-	ratingUsecase := rating_usecase.NewRatingUsecase(ratingRep, productRep, userRep)
 	adminUsecase := admin_usecase.NewAdminUsecase(productRep, categoryRep, invoiceRep, adminRep, userRep)
+	cartUsecase := cart_usecase.NewCartUsecase(productRep, userRep, invoiceRep)
+	commentUsecase := comment_usecase.NewCommentUsecase(commentsRep, userRep, adminRep)
+	faveUsecase := fave_usecase.NewFaveUsecase(userRep, productRep, categoryRep)
+	productUsecase := product_usecase.NewProductUseCase(productRep, categoryRep)
+	ratingUsecase := rating_usecase.NewRatingUsecase(ratingRep, productRep, userRep)
+	userUsercase := user_usecase.NewUserUsecase(userRep, cacher)
 
 	//deliveries
+	jwtsecret := os.Getenv("JWT_SECRET")
 	j := jwt.NewJWTTokenHandler(jwtsecret)
-	userDelivery := user_delivery.NewUserDelivary(userUsercase, j)
-	productDelivery := product_delivery.NewProductDelivery(productUsecase)
 	adminDelivery := admin_delivery.NewAdminDelivery(adminUsecase, j)
-	faveDelivery := fave_delivery.NewFaveDelivery(faveUsecase)
+	cartDelivery := cart_delivery.NewCartDelivery(cartUsecase)
 	commentDelivery := comment_delivery.NewCommentDelivery(commentUsecase)
+	faveDelivery := fave_delivery.NewFaveDelivery(faveUsecase)
+	productDelivery := product_delivery.NewProductDelivery(productUsecase)
 	ratingDelivery := rating_delivery.NewRatingDelivery(ratingUsecase)
+	userDelivery := user_delivery.NewUserDelivary(userUsercase, j)
 
 	router := gin.Default()
 	//common middlewares
@@ -127,6 +131,10 @@ func StartServer() {
 	private := router.Group("/private-api")
 	a := middlewares.NewAuth(j)
 	private.Use(a.AuthMiddleware())
+	private.GET("/isincart/:id", cartDelivery.IsInCart)
+	private.POST("/addtocart/:id", cartDelivery.AddToCart)
+	private.PUT("/editincart/:id", cartDelivery.ChangeCountInCart)
+	private.GET("/getcart", cartDelivery.GetCart)
 	private.GET("/isinfaves/:id", faveDelivery.CheckFave)
 	private.GET("/userfaves", faveDelivery.GetFaves)
 	private.POST("/faveproduct/:id", faveDelivery.FaveProduct)
@@ -137,7 +145,10 @@ func StartServer() {
 	//admin group
 	adminroute := os.Getenv("ADMIN_ROUTE")
 	admin := router.Group(adminroute)
-	//admin.Use()
+	admin.POST("/login", adminDelivery.Login)
+	admin.Use(a.AuthMiddleware())
+	admin.POST("/addadmin", adminDelivery.AddAdmin)
+	admin.PUT("/fillfields", adminDelivery.FillFields)
 	admin.POST("/addproduct", adminDelivery.AddProduct)
 	admin.POST("/addcategory", adminDelivery.AddCategory)
 	admin.DELETE("/deleteproduct/:id", adminDelivery.DeleteProduct)
