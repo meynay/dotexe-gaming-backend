@@ -10,7 +10,7 @@ import (
 
 func TestJWT(t *testing.T) {
 	secret := "123456"
-	j := jwt.NewJWTTokenHandler(secret)
+	j := jwt.NewJWTTokenHandler([]byte(secret))
 	id, _ := primitive.ObjectIDFromHex("3a1b3ba52817")
 	at, rt, err := j.GenerateJWT(id, 15)
 	assert.Nil(t, err, "error should be nil")

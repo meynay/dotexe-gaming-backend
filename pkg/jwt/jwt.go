@@ -49,7 +49,7 @@ func (j *JWTTokenHandler) ValidateJWT(tokenString string) (primitive.ObjectID, e
 		return z, err
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		id := claims["id"].(primitive.ObjectID)
+		id, _ := primitive.ObjectIDFromHex(claims["id"].(string))
 		return id, nil
 	}
 	return z, jwt.ErrSignatureInvalid
