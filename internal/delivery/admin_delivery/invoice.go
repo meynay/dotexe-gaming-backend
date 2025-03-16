@@ -21,7 +21,7 @@ func (ad *AdminDelivery) GetInvoices(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "counttoshow should be integer"})
 		return
 	}
-	page, err := strconv.Atoi(c.Query("counttoshow"))
+	page, err := strconv.Atoi(c.Query("page"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "page should be integer"})
 		return
