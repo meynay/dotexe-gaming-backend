@@ -8,10 +8,10 @@ import (
 )
 
 type JWTTokenHandler struct {
-	secret string
+	secret []byte
 }
 
-func NewJWTTokenHandler(secret string) *JWTTokenHandler {
+func NewJWTTokenHandler(secret []byte) *JWTTokenHandler {
 	return &JWTTokenHandler{secret: secret}
 }
 

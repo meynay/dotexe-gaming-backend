@@ -83,7 +83,7 @@ func StartServer() {
 
 	//deliveries
 	jwtsecret := os.Getenv("JWT_SECRET")
-	j := jwt.NewJWTTokenHandler(jwtsecret)
+	j := jwt.NewJWTTokenHandler([]byte(jwtsecret))
 	adminDelivery := admin_delivery.NewAdminDelivery(adminUsecase, j)
 	cartDelivery := cart_delivery.NewCartDelivery(cartUsecase)
 	commentDelivery := comment_delivery.NewCommentDelivery(commentUsecase)
