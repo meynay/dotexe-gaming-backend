@@ -34,5 +34,6 @@ func (cd *CartDelivery) GetInvoice(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 	}
 	userd, _ := primitive.ObjectIDFromHex(userID)
-	cd.usecase.GetInvoice(userd, invoiceid)
+	invoice := cd.usecase.GetInvoice(userd, invoiceid)
+	c.JSON(http.StatusOK, invoice)
 }
