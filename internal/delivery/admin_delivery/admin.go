@@ -76,6 +76,7 @@ func (ad *AdminDelivery) GetInfo(c *gin.Context) {
 	userID, ok := userid.(string)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
+		return
 	}
 	userd, _ := primitive.ObjectIDFromHex(userID)
 	admin, err := ad.adminusecase.GetInfo(userd)
@@ -95,6 +96,7 @@ func (ad *AdminDelivery) FillFields(c *gin.Context) {
 	userID, ok := userid.(string)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
+		return
 	}
 	userd, _ := primitive.ObjectIDFromHex(userID)
 	var admin entities.Admin

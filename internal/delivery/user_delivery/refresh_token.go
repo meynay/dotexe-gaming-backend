@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (d *UserDelivery) RefreshToken(c *gin.Context) {
@@ -17,7 +18,8 @@ func (d *UserDelivery) RefreshToken(c *gin.Context) {
 	}
 
 	//validates refresh token and takes phone number out of it
-	id, err := d.generator.ValidateJWT(request.RefreshToken)
+	ID, err := d.generator.ValidateJWT(request.RefreshToken)
+	id, _ := primitive.ObjectIDFromHex(ID)
 	if err != nil {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid refresh token"})
 		return

@@ -40,17 +40,15 @@ func (j *JWTTokenHandler) GenerateJWT(id primitive.ObjectID, mins int) (accessTo
 }
 
 // checks if token is valid
-func (j *JWTTokenHandler) ValidateJWT(tokenString string) (primitive.ObjectID, error) {
+func (j *JWTTokenHandler) ValidateJWT(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		return j.secret, nil
 	})
-	z, _ := primitive.ObjectIDFromHex("")
 	if err != nil {
-		return z, err
+		return "", err
 	}
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		id, _ := primitive.ObjectIDFromHex(claims["id"].(string))
-		return id, nil
+		return claims["id"].(string), nil
 	}
-	return z, jwt.ErrSignatureInvalid
+	return "", jwt.ErrSignatureInvalid
 }
