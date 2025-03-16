@@ -53,3 +53,8 @@ func (ru *RatingUsecase) GetRates(productid primitive.ObjectID) []entities.Ratin
 	}
 	return ratings
 }
+
+func (ru *RatingUsecase) GetRating(productid, userid primitive.ObjectID) (float64, error) {
+	rate, err := ru.ratingrep.GetRating(userid, productid)
+	return rate.Rate, err
+}

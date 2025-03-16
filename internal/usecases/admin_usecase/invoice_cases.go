@@ -32,12 +32,12 @@ func (au *AdminUsecase) GetInvoices(filter entities.InvoiceFilter) []entities.In
 	return invoices[from:to]
 }
 
-func (au *AdminUsecase) GetInvoice(id primitive.ObjectID) (string, entities.Invoice, error) {
+func (au *AdminUsecase) GetInvoice(id primitive.ObjectID) (string, string, entities.Invoice, error) {
 	invoice, err := au.invoicerep.GetInvoice(id)
 	if err != nil {
-		return "", invoice, err
+		return "", "", invoice, err
 	}
-	return au.userrep.GetUsername(invoice.UserID), invoice, nil
+	return au.userrep.GetUsername(invoice.UserID), au.userrep.GetPhoneNumber(invoice.UserID), invoice, nil
 }
 
 func (au *AdminUsecase) ChangeInvoiceStatus(invoiceid primitive.ObjectID, status int) error {

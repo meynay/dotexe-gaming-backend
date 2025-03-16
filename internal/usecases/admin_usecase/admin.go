@@ -27,6 +27,10 @@ func (au *AdminUsecase) AddAdmin(username, password string) error {
 	return au.adminrep.AddAdmin(username, password)
 }
 
+func (au *AdminUsecase) GetInfo(adminID primitive.ObjectID) (entities.Admin, error) {
+	return au.adminrep.GetInfo(adminID)
+}
+
 func (au *AdminUsecase) FillFields(admin entities.Admin) error {
 	return au.adminrep.FillFields(admin)
 }

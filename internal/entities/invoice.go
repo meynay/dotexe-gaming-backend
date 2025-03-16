@@ -43,6 +43,8 @@ type InvoiceFilter struct {
 	Page        int
 }
 
+const TimeLayout = "2006-01-02"
+
 const (
 	Processing = iota
 	GettingReady

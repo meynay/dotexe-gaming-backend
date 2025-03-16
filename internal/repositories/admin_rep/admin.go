@@ -53,6 +53,13 @@ func (ar *AdminRep) AddAdmin(username, password string) error {
 	return nil
 }
 
+func (ar *AdminRep) GetInfo(adminID primitive.ObjectID) (entities.Admin, error) {
+	res := ar.rep.FindOne(context.TODO(), bson.M{"_id": adminID})
+	admin := entities.Admin{}
+	err := res.Decode(&admin)
+	return admin, err
+}
+
 func (ar *AdminRep) FillFields(admin entities.Admin) error {
 	_, err := ar.rep.UpdateOne(context.TODO(), bson.M{"_id": admin.ID},
 		bson.M{

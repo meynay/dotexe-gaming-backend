@@ -7,6 +7,13 @@ import (
 )
 
 type UserRepositoryI interface {
+	//user
+	ResetPassword(userid primitive.ObjectID, password string) error
+	FillInfo(user entities.User) error
+	GetInfo(ID primitive.ObjectID) (entities.User, error)
+	GetUsername(userid primitive.ObjectID) string
+	GetPhoneNumber(userid primitive.ObjectID) string
+
 	//login-signup
 	InsertUserByPhone(phone string) error
 	InsertUserByEmail(email, password string) error

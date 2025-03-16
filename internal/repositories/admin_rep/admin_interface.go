@@ -11,4 +11,5 @@ type AdminRepI interface {
 	GetName(id primitive.ObjectID) string
 	FillFields(admin entities.Admin) error
 	Login(username, password string) (primitive.ObjectID, error)
+	GetInfo(adminID primitive.ObjectID) (entities.Admin, error)
 }

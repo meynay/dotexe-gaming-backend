@@ -59,7 +59,7 @@ func (ad *AdminDelivery) EditCategory(c *gin.Context) {
 }
 
 func (ad *AdminDelivery) DeleteCategory(c *gin.Context) {
-	id, _ := primitive.ObjectIDFromHex(c.Param("id"))
+	id, _ := primitive.ObjectIDFromHex(c.Param("categoryid"))
 	err := ad.adminusecase.DeleteCategory(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err})

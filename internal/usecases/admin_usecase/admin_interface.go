@@ -11,9 +11,11 @@ type AdminUsecaseI interface {
 	//admin
 	AddAdmin(username, password string) error
 	FillFields(admin entities.Admin) error
+	GetInfo(adminID primitive.ObjectID) (entities.Admin, error)
 	Login(username, password string) (primitive.ObjectID, error)
 	ForgetPassword1(phone string) error
 	ForgetPassword2(phone, code string) error
+
 	//product
 	AddProduct(product entities.Product) error
 	EditProduct(product entities.Product) error
@@ -26,7 +28,7 @@ type AdminUsecaseI interface {
 
 	//invoices
 	GetInvoices(filter entities.InvoiceFilter) []entities.Invoice
-	GetInvoice(id primitive.ObjectID) (entities.Invoice, error)
+	GetInvoice(id primitive.ObjectID) (string, string, entities.Invoice, error)
 	ChangeInvoiceStatus(invoiceid primitive.ObjectID, status int) error
 
 	//chart

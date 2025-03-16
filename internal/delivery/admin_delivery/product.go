@@ -70,7 +70,7 @@ func (ad *AdminDelivery) EditProduct(c *gin.Context) {
 }
 
 func (ad *AdminDelivery) DeleteProduct(c *gin.Context) {
-	id, _ := primitive.ObjectIDFromHex(c.Param("id"))
+	id, _ := primitive.ObjectIDFromHex(c.Param("productid"))
 	err := ad.adminusecase.DeleteProduct(id)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})

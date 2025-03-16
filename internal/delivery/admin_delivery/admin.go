@@ -66,12 +66,42 @@ func (ad *AdminDelivery) AddAdmin(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "admin added"})
 }
 
+func (ad *AdminDelivery) GetInfo(c *gin.Context) {
+	userid, exists := c.Get("id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
+		return
+	}
+	userID, ok := userid.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
+	}
+	userd, _ := primitive.ObjectIDFromHex(userID)
+	admin, err := ad.adminusecase.GetInfo(userd)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
+	c.JSON(http.StatusOK, admin)
+}
+
 func (ad *AdminDelivery) FillFields(c *gin.Context) {
+	userid, exists := c.Get("id")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
+		return
+	}
+	userID, ok := userid.(string)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
+	}
+	userd, _ := primitive.ObjectIDFromHex(userID)
 	var admin entities.Admin
 	if err := c.BindJSON(&admin); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad json format"})
 		return
 	}
+	admin.ID = userd
 	err := ad.adminusecase.FillFields(admin)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})

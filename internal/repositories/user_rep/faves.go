@@ -39,13 +39,3 @@ func (ur *UserRepository) GetFaves(userid primitive.ObjectID) []primitive.Object
 	res.Decode(&u)
 	return u.Faves
 }
-
-func (ur *UserRepository) GetUsername(userid primitive.ObjectID) string {
-	res := ur.db.FindOne(context.TODO(), bson.M{"_id": userid})
-	var user entities.User
-	res.Decode(&user)
-	if user.FirstName != "" {
-		return user.FirstName + " " + user.LastName
-	}
-	return "ناشناس"
-}

@@ -19,7 +19,7 @@ func NewProductDelivery(u *product_usecase.ProductUseCase) *ProductDelivery {
 }
 
 func (pd *ProductDelivery) GetProduct(c *gin.Context) {
-	productid, _ := primitive.ObjectIDFromHex(c.Param("id"))
+	productid, _ := primitive.ObjectIDFromHex(c.Param("productid"))
 	product, err := pd.pu.GetProduct(productid)
 	if err.Error() == "couldn't find product" {
 		c.JSON(http.StatusNotFound, gin.H{"message": "no products found with given id"})

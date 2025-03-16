@@ -9,4 +9,5 @@ import (
 type RatingUsecaseI interface {
 	RateProduct(r entities.Rating) error
 	GetRates(productid primitive.ObjectID) []entities.RatingOut
+	GetRating(productid, userid primitive.ObjectID) (float64, error)
 }

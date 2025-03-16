@@ -6,6 +6,8 @@ type AdminDeliveryI interface {
 	Login(c *gin.Context)
 	AddAdmin(c *gin.Context)
 	FillFields(c *gin.Context)
+	GetInfo(c *gin.Context)
+
 	//product
 	AddProduct(c *gin.Context)
 	EditProduct(c *gin.Context)
@@ -18,7 +20,7 @@ type AdminDeliveryI interface {
 
 	//invoices
 	GetInvoices(c *gin.Context)
-	GetInvocie(c *gin.Context)
+	GetInvoice(c *gin.Context)
 	ChangeInvoiceStatus(c *gin.Context)
 
 	//chart
