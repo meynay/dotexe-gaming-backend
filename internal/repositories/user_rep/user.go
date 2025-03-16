@@ -2,8 +2,10 @@ package user_rep
 
 import (
 	"context"
+	"fmt"
 	"store/internal/entities"
 	"store/pkg"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -36,10 +38,23 @@ func (ur *UserRepository) GetInfo(ID primitive.ObjectID) (entities.User, error) 
 }
 
 func (ur *UserRepository) FillInfo(user entities.User) error {
+	res := ur.db.FindOne(context.TODO(), bson.M{"email": strings.ToLower(user.Email)})
+	var temp entities.User
+	if res.Decode(&temp) == nil {
+		if temp.ID != user.ID {
+			return fmt.Errorf("email exists")
+		}
+	}
+	res = ur.db.FindOne(context.TODO(), bson.M{"phone_number": user.Phone})
+	if res.Decode(&temp) == nil {
+		if temp.ID != user.ID {
+			return fmt.Errorf("phone number exists")
+		}
+	}
 	_, err := ur.db.UpdateOne(context.TODO(), bson.M{"_id": user.ID}, bson.M{
 		"$set": bson.M{
 			"phone_number": user.Phone,
-			"email":        user.Email,
+			"email":        strings.ToLower(user.Email),
 			"firstname":    user.FirstName,
 			"lastname":     user.LastName,
 			"address":      user.Address,

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"store/internal/entities"
 	"store/pkg"
+	"strings"
 	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
@@ -39,6 +40,7 @@ func (r *UserRepository) InsertUserByEmail(email, password string) (*entities.Us
 	if err != nil {
 		return nil, err
 	}
+	email = strings.ToLower(email)
 	user := entities.User{
 		Email:     email,
 		Password:  password,
@@ -64,6 +66,7 @@ func (r *UserRepository) GetUserByPhone(phone string) (*entities.User, error) {
 
 func (r *UserRepository) GetUserByEmail(email string) (*entities.User, error) {
 	var user entities.User
+	email = strings.ToLower(email)
 	err := r.db.FindOne(context.TODO(), bson.M{"email": email}).Decode(&user)
 	if err != nil {
 		return nil, fmt.Errorf("user not found")
@@ -73,6 +76,7 @@ func (r *UserRepository) GetUserByEmail(email string) (*entities.User, error) {
 
 func (r *UserRepository) CheckUser(email, password string) (*entities.User, error) {
 	var user entities.User
+	email = strings.ToLower(email)
 	err := r.db.FindOne(context.TODO(), bson.M{"email": email}).Decode(&user)
 	if err != nil {
 		return nil, fmt.Errorf("user not found")

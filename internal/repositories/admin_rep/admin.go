@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"store/internal/entities"
 	"store/pkg"
+	"strings"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -35,6 +36,7 @@ func (ar *AdminRep) AddAdmin(username, password string) error {
 	res := ar.rep.FindOne(context.TODO(), bson.M{"username": username})
 	admin := entities.Admin{}
 	res.Decode(&admin)
+	username = strings.ToLower(username)
 	if admin.Username == username {
 		return fmt.Errorf("this username exists")
 	}
@@ -61,6 +63,13 @@ func (ar *AdminRep) GetInfo(adminID primitive.ObjectID) (entities.Admin, error) 
 }
 
 func (ar *AdminRep) FillFields(admin entities.Admin) error {
+	res := ar.rep.FindOne(context.TODO(), bson.M{"phone_number": admin.Phone})
+	var temp entities.Admin
+	if res.Decode(&temp) == nil {
+		if temp.ID != admin.ID {
+			return fmt.Errorf("phone number exists")
+		}
+	}
 	_, err := ar.rep.UpdateOne(context.TODO(), bson.M{"_id": admin.ID},
 		bson.M{
 			"$set": bson.M{
@@ -78,6 +87,7 @@ func (ar *AdminRep) FillFields(admin entities.Admin) error {
 }
 
 func (ar *AdminRep) Login(username, password string) (primitive.ObjectID, error) {
+	username = strings.ToLower(username)
 	res := ar.rep.FindOne(context.TODO(), bson.M{"username": username})
 	admin := entities.Admin{}
 	if err := res.Decode(&admin); err != nil {
