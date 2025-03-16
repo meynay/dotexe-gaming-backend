@@ -59,6 +59,7 @@ func (ar *AdminRep) GetInfo(adminID primitive.ObjectID) (entities.Admin, error) 
 	res := ar.rep.FindOne(context.TODO(), bson.M{"_id": adminID})
 	admin := entities.Admin{}
 	err := res.Decode(&admin)
+	admin.Password = ""
 	return admin, err
 }
 

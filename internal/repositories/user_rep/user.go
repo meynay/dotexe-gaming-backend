@@ -34,6 +34,7 @@ func (ur *UserRepository) GetInfo(ID primitive.ObjectID) (entities.User, error) 
 	if err := res.Decode(&user); err != nil {
 		return user, err
 	}
+	user.Password = ""
 	return user, nil
 }
 
