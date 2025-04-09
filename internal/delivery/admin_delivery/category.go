@@ -1,44 +1,71 @@
 package admin_delivery
 
 import (
+	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"store/internal/entities"
-	"time"
+	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (ad *AdminDelivery) AddCategory(c *gin.Context) {
-	form, err := c.MultipartForm()
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to parse form"})
-		return
-	}
-	category := entities.Category{}
-	if err := c.BindJSON(&category); err != nil {
-		c.Error(err)
-		c.JSON(http.StatusBadRequest, gin.H{"error": "bad json format"})
-		return
-	}
-	primaryImage := form.File["image"]
-	dir := os.Getenv("CATEGORY_DIR")
-	dst := dir + time.Now().String() + primaryImage[0].Filename
-	if err = c.SaveUploadedFile(primaryImage[0], dst); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't save file"})
+	const maxMemory = 10 << 20 // 10MB
+	categoryDir := os.Getenv("CATEGORY_DIR")
+	if categoryDir == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "category upload directory not configured"})
 		return
 	}
 	host := os.Getenv("IMAGE_HOST")
-	link := fmt.Sprintf("%s%s", host, dst)
-	log.Printf("File %s uploaded successfully. Link: %s\n", primaryImage[0].Filename, link)
-	category.Image = link
-	err = ad.adminusecase.AddCategory(category)
+	if host == "" {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "image host not configured"})
+		return
+	}
+	if err := c.Request.ParseMultipartForm(maxMemory); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to parse form"})
+		return
+	}
+	categoryJSON := c.PostForm("category")
+	if categoryJSON == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing category data"})
+		return
+	}
+	var category entities.Category
+	if err := json.Unmarshal([]byte(categoryJSON), &category); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid category data"})
+		return
+	}
+	if err := os.MkdirAll(categoryDir, 0755); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create upload directory"})
+		return
+	}
+	primaryImage, err := c.FormFile("image")
 	if err != nil {
-		c.Error(err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		c.JSON(http.StatusBadRequest, gin.H{"error": "category image is required"})
+		return
+	}
+	uniqueID := uuid.New().String()
+	fileExt := strings.ToLower(filepath.Ext(primaryImage.Filename))
+	allowedExtensions := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true}
+	if !allowedExtensions[fileExt] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file type for category image"})
+		return
+	}
+	filename := fmt.Sprintf("category_%s%s", uniqueID, fileExt)
+	filePath := filepath.Join(categoryDir, filename)
+	if err := c.SaveUploadedFile(primaryImage, filePath); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save category image"})
+		return
+	}
+	category.Image = fmt.Sprintf("%s/%s", strings.TrimSuffix(host, "/"), filename)
+	if err := ad.adminusecase.AddCategory(category); err != nil {
+		os.Remove(filePath)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save category"})
 		return
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "category added seccessfully"})

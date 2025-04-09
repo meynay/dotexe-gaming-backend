@@ -1,52 +1,85 @@
 package admin_delivery
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"store/internal/entities"
-	"time"
+	"store/pkg"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (ad *AdminDelivery) AddProduct(c *gin.Context) {
-	form, err := c.MultipartForm()
-	if err != nil {
+	const maxMemory = 10 << 20
+	if err := c.Request.ParseMultipartForm(maxMemory); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "unable to parse form"})
 		return
 	}
-	product := entities.Product{}
-	if c.BindJSON(&product) != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "bad json format"})
+	productJSON := c.PostForm("product")
+	if productJSON == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "missing product data"})
 		return
 	}
-	primaryImage := form.File["image"]
-	secondaryImages := form.File["images"]
-	dir := os.Getenv("PRODUCT_DIR")
-	dst := dir + time.Now().String() + primaryImage[0].Filename
-	if err = c.SaveUploadedFile(primaryImage[0], dst); err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't save file"})
+	product := entities.Product{}
+	if err := json.Unmarshal([]byte(productJSON), &product); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid product data"})
+		return
+	}
+	primaryImage, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "primary image is required"})
+		return
+	}
+	uniqueID := uuid.New().String()
+	fileExt := filepath.Ext(primaryImage.Filename)
+	allowedExtensions := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true}
+	if !allowedExtensions[fileExt] {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file type for primary image"})
+		return
+	}
+	primaryFilename := fmt.Sprintf("product_%s_primary%s", uniqueID, fileExt)
+	primaryDst := filepath.Join(os.Getenv("PRODUCT_DIR"), primaryFilename)
+	if err := c.SaveUploadedFile(primaryImage, primaryDst); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save primary image"})
 		return
 	}
 	host := os.Getenv("IMAGE_HOST")
-	link := fmt.Sprintf("%s%s", host, dst)
-	log.Printf("File %s uploaded successfully. Link: %s\n", primaryImage[0].Filename, link)
+	link := fmt.Sprintf("%s%s", host, primaryFilename)
+	log.Printf("File %s uploaded successfully. Link: %s\n", primaryFilename, link)
 	product.Image = link
-	images := []string{}
-	for i, file := range secondaryImages {
-		dst = dir + time.Now().String() + string(i) + file.Filename
-		if err = c.SaveUploadedFile(file, dst); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "couldn't save file"})
+	secondaryImages := c.Request.MultipartForm.File["images"]
+	var imageLinks []string
+	var savedFiles []string
+	for i, fileHeader := range secondaryImages {
+		if fileHeader.Size > maxMemory {
+			pkg.CleanupFiles(savedFiles)
+			c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("file %s is too large", fileHeader.Filename)})
 			return
 		}
-		link := fmt.Sprintf("%s%s", host, dst)
-		log.Printf("File %s uploaded successfully. Link: %s\n", file.Filename, link)
-		images = append(images, link)
+		fileExt := filepath.Ext(fileHeader.Filename)
+		allowedExtensions := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true}
+		if !allowedExtensions[fileExt] {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file type for secondary image"})
+			return
+		}
+		secondaryFilename := fmt.Sprintf("product_%s_secondary_%d%s", uniqueID, i, fileExt)
+		secondaryDst := filepath.Join(os.Getenv("PRODUCT_DIR"), secondaryFilename)
+		if err := c.SaveUploadedFile(fileHeader, secondaryDst); err != nil {
+			pkg.CleanupFiles(savedFiles)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save secondary images"})
+			return
+		}
+		savedFiles = append(savedFiles, secondaryDst)
+		link := fmt.Sprintf("%s/%s", host, secondaryFilename)
+		imageLinks = append(imageLinks, link)
 	}
-	product.Images = images
+	product.Images = imageLinks
 	err = ad.adminusecase.AddProduct(product)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
