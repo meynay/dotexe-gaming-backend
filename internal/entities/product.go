@@ -24,6 +24,7 @@ type Product struct {
 	Info          map[string]string  `json:"info" bson:"info"`
 	CategoryID    primitive.ObjectID `json:"category_id" bson:"category_id"`
 	AddedAt       time.Time          `json:"time_added" bson:"time_added"`
+	UpdatedAt     time.Time          `json:"updated_at" bson:"updated_at"`
 	Rating        float64            `json:"rating" bson:"rating"`
 	RateCount     int                `json:"rate_count" bson:"rate_count"`
 	Views         int                `json:"views" bson:"views"`

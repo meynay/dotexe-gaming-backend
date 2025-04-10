@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"store/internal/entities"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -53,7 +54,19 @@ func (pr *ProductRep) GetProducts() ([]entities.Product, error) {
 func (pr *ProductRep) EditProduct(p entities.Product) error {
 	_, err := pr.prdb.UpdateOne(context.TODO(), bson.M{
 		"_id": p.ID,
-	}, p)
+	}, bson.M{"$set": bson.M{
+		"name":        p.Name,
+		"image":       p.Image,
+		"images":      p.Images,
+		"description": p.Description,
+		"price":       p.Price,
+		"stock":       p.Stock,
+		"info":        p.Info,
+		"off":         p.Off,
+		"category_id": p.CategoryID,
+		"tags":        p.Tags,
+		"updated_at":  time.Now(),
+	}})
 	if err != nil {
 		return fmt.Errorf("couldn't update product")
 	}

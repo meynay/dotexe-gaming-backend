@@ -30,7 +30,11 @@ func (cr *CategoryRep) AddCategory(c entities.Category) error {
 }
 
 func (cr *CategoryRep) EditCategory(c entities.Category) error {
-	_, err := cr.rep.UpdateOne(context.TODO(), bson.M{"_id": c.ID}, c)
+	_, err := cr.rep.UpdateOne(context.TODO(), bson.M{"_id": c.ID}, bson.M{"$set": bson.M{
+		"name":      c.Name,
+		"image":     c.Image,
+		"parent_id": c.ParentID,
+	}})
 	if err != nil {
 		return fmt.Errorf("couldn't update category")
 	}
