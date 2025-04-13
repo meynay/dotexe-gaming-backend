@@ -38,7 +38,7 @@ func (ad *AdminDelivery) AddProduct(c *gin.Context) {
 	}
 	uniqueID := uuid.New().String()
 	fileExt := filepath.Ext(primaryImage.Filename)
-	allowedExtensions := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true}
+	allowedExtensions := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true, ".svg": true}
 	if !allowedExtensions[fileExt] {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file type for primary image"})
 		return
@@ -50,7 +50,7 @@ func (ad *AdminDelivery) AddProduct(c *gin.Context) {
 		return
 	}
 	host := os.Getenv("IMAGE_HOST")
-	link := fmt.Sprintf("%s%s", host, primaryFilename)
+	link := fmt.Sprintf("%sproduct/%s", host, primaryFilename)
 	log.Printf("File %s uploaded successfully. Link: %s\n", primaryFilename, link)
 	product.Image = link
 	secondaryImages := c.Request.MultipartForm.File["images"]
@@ -63,7 +63,6 @@ func (ad *AdminDelivery) AddProduct(c *gin.Context) {
 			return
 		}
 		fileExt := filepath.Ext(fileHeader.Filename)
-		allowedExtensions := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true}
 		if !allowedExtensions[fileExt] {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file type for secondary image"})
 			return
@@ -77,7 +76,7 @@ func (ad *AdminDelivery) AddProduct(c *gin.Context) {
 			return
 		}
 		savedFiles = append(savedFiles, secondaryDst)
-		link := fmt.Sprintf("%s/%s", host, secondaryFilename)
+		link := fmt.Sprintf("%sproduct/%s", host, secondaryFilename)
 		imageLinks = append(imageLinks, link)
 	}
 	product.Images = imageLinks
@@ -109,7 +108,7 @@ func (ad *AdminDelivery) EditProduct(c *gin.Context) {
 	if err == nil {
 		uniqueID := uuid.New().String()
 		fileExt := filepath.Ext(primaryImage.Filename)
-		allowedExtensions := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true}
+		allowedExtensions := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true, ".svg": true}
 		if !allowedExtensions[fileExt] {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file type for primary image"})
 			return
@@ -121,7 +120,7 @@ func (ad *AdminDelivery) EditProduct(c *gin.Context) {
 			return
 		}
 		host := os.Getenv("IMAGE_HOST")
-		link := fmt.Sprintf("%s%s", host, primaryFilename)
+		link := fmt.Sprintf("%sproduct/%s", host, primaryFilename)
 		log.Printf("File %s uploaded successfully. Link: %s\n", primaryFilename, link)
 		product.Image = link
 	}
@@ -135,7 +134,7 @@ func (ad *AdminDelivery) EditProduct(c *gin.Context) {
 			return
 		}
 		fileExt := filepath.Ext(fileHeader.Filename)
-		allowedExtensions := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true}
+		allowedExtensions := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true, ".svg": true}
 		if !allowedExtensions[fileExt] {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file type for secondary image"})
 			return
@@ -150,7 +149,7 @@ func (ad *AdminDelivery) EditProduct(c *gin.Context) {
 		}
 		host := os.Getenv("IMAGE_HOST")
 		savedFiles = append(savedFiles, secondaryDst)
-		link := fmt.Sprintf("%s/%s", host, secondaryFilename)
+		link := fmt.Sprintf("%sproduct/%s", host, secondaryFilename)
 		imageLinks = append(imageLinks, link)
 	}
 	images := product.Images

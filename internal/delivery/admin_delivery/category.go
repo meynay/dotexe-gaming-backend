@@ -51,7 +51,7 @@ func (ad *AdminDelivery) AddCategory(c *gin.Context) {
 	}
 	uniqueID := uuid.New().String()
 	fileExt := strings.ToLower(filepath.Ext(primaryImage.Filename))
-	allowedExtensions := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true}
+	allowedExtensions := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true, ".svg": true}
 	if !allowedExtensions[fileExt] {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file type for category image"})
 		return
@@ -62,7 +62,7 @@ func (ad *AdminDelivery) AddCategory(c *gin.Context) {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save category image"})
 		return
 	}
-	category.Image = fmt.Sprintf("%s/%s", strings.TrimSuffix(host, "/"), filename)
+	category.Image = fmt.Sprintf("%s/category/%s", strings.TrimSuffix(host, "/"), filename)
 	if err := ad.adminusecase.AddCategory(category); err != nil {
 		os.Remove(filePath)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to save category"})
@@ -101,7 +101,7 @@ func (ad *AdminDelivery) EditCategory(c *gin.Context) {
 	if err == nil {
 		uniqueID := uuid.New().String()
 		fileExt := strings.ToLower(filepath.Ext(primaryImage.Filename))
-		allowedExtensions := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true}
+		allowedExtensions := map[string]bool{".jpg": true, ".jpeg": true, ".png": true, ".webp": true, ".svg": true}
 		if !allowedExtensions[fileExt] {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid file type for category image"})
 			return
@@ -112,7 +112,7 @@ func (ad *AdminDelivery) EditCategory(c *gin.Context) {
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "could not save category image"})
 			return
 		}
-		category.Image = fmt.Sprintf("%s/%s", strings.TrimSuffix(host, "/"), filename)
+		category.Image = fmt.Sprintf("%s/category/%s", strings.TrimSuffix(host, "/"), filename)
 	}
 	if c.BindJSON(&category) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad json format"})
