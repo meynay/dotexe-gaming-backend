@@ -2,7 +2,6 @@ package admin_usecase
 
 import (
 	"store/internal/entities"
-	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -32,5 +31,5 @@ type AdminUsecaseI interface {
 	ChangeInvoiceStatus(invoiceid primitive.ObjectID, status int) error
 
 	//chart
-	GetChartInfo(filter entities.ChartFilter) map[time.Time]int
+	GetChartInfo(filter entities.ChartFilter) map[string]int
 }
