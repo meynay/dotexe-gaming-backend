@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"store/internal/entities"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -57,7 +58,14 @@ func (bp *BlogPostRep) GetBlogPosts() ([]entities.BlogPost, error) {
 func (bp *BlogPostRep) EditBlogPost(b entities.BlogPost) error {
 	_, err := bp.bpdb.UpdateOne(context.TODO(), bson.M{
 		"_id": b.ID,
-	}, b)
+	}, bson.M{"$set": bson.M{
+		"title":       b.Title,
+		"content":     b.Content,
+		"image":       b.Image,
+		"category_id": b.Category_id,
+		"updated_at":  time.Now(),
+		"tags":        b.Tags,
+	}})
 	if err != nil {
 		return fmt.Errorf("couldn't update blogpost")
 	}

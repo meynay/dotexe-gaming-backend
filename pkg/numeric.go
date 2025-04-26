@@ -1,7 +1,7 @@
 package pkg
 
 import (
-	"math/rand/v2"
+	"math/rand"
 	"strconv"
 )
 
@@ -13,7 +13,7 @@ func IsNumeric(input string) bool {
 func RandomNumber() string {
 	out := ""
 	for i := 0; i < 6; i++ {
-		n := rand.Int() % 10
+		n := rand.Intn(10)
 		out = out + strconv.Itoa(n)
 	}
 	return out
