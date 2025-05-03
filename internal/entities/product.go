@@ -33,15 +33,17 @@ type Product struct {
 }
 
 type ProductLess struct {
-	ID          primitive.ObjectID `json:"_id"`
-	Name        string             `json:"name"`
-	Image       string             `json:"image"`
-	Description string             `json:"description"`
-	Price       int                `json:"price"`
-	Category    string             `json:"category"`
-	Off         float64            `json:"off"`
-	Rating      float64            `json:"rating"`
-	RateCount   int                `json:"rate_count"`
+	ID            primitive.ObjectID `json:"_id"`
+	Name          string             `json:"name"`
+	Image         string             `json:"image"`
+	Description   string             `json:"description"`
+	Price         int                `json:"price"`
+	Category      string             `json:"category"`
+	Off           float64            `json:"off"`
+	Rating        float64            `json:"rating"`
+	RateCount     int                `json:"rate_count"`
+	Views         int                `json:"views"`
+	PurchaseCount int                `json:"purchase_count"`
 }
 
 type Filter struct {

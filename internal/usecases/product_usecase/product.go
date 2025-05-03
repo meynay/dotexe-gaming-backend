@@ -122,11 +122,16 @@ func (pu *ProductUseCase) FilterProducts(filter entities.Filter) ([]entities.Pro
 	end := start + filter.NumberOfItems
 	for start < end && (start >= 0 && start < len(ps)) {
 		out := entities.ProductLess{
-			ID:    ps[start].Pr.ID,
-			Name:  ps[start].Pr.Name,
-			Image: ps[start].Pr.Image,
-			Price: ps[start].Pr.Price,
-			Off:   ps[start].Pr.Off,
+			ID:            ps[start].Pr.ID,
+			Name:          ps[start].Pr.Name,
+			Image:         ps[start].Pr.Image,
+			Price:         ps[start].Pr.Price,
+			Off:           ps[start].Pr.Off,
+			Description:   ps[start].Pr.Description,
+			Rating:        ps[start].Pr.Rating,
+			RateCount:     ps[start].Pr.RateCount,
+			PurchaseCount: ps[start].Pr.PurchaseCount,
+			Views:         ps[start].Pr.Views,
 		}
 		cat, _ := pu.categoryrep.GetCategory(ps[start].Pr.CategoryID)
 		out.Category = cat.Name

@@ -3,6 +3,7 @@ package admin_usecase
 import (
 	"sort"
 	"store/internal/entities"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -42,4 +43,29 @@ func (au *AdminUsecase) GetInvoice(id primitive.ObjectID) (string, string, entit
 
 func (au *AdminUsecase) ChangeInvoiceStatus(invoiceid primitive.ObjectID, status int) error {
 	return au.invoicerep.ChangeStatus(invoiceid, status)
+}
+
+func (au *AdminUsecase) GetNewInvoicesCount() int {
+	return len(au.GetInvoices(entities.InvoiceFilter{
+		From:        time.Now().AddDate(0, 0, -8),
+		To:          time.Now().AddDate(0, 0, 1),
+		CountToShow: 99999,
+		Page:        1,
+		Status:      entities.All,
+	}))
+}
+
+func (au *AdminUsecase) GetMonthlySalesPrice() int {
+	invoices := au.GetInvoices(entities.InvoiceFilter{
+		From:        time.Now().AddDate(0, -1, -1),
+		To:          time.Now().AddDate(0, 0, 1),
+		CountToShow: 99999,
+		Page:        1,
+		Status:      entities.All,
+	})
+	price := 0
+	for _, invoice := range invoices {
+		price += invoice.TotalPrice
+	}
+	return price
 }

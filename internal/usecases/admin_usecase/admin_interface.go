@@ -30,6 +30,12 @@ type AdminUsecaseI interface {
 	GetInvoice(id primitive.ObjectID) (string, string, entities.Invoice, error)
 	ChangeInvoiceStatus(invoiceid primitive.ObjectID, status int) error
 
+	//blogpost
+	AddBlogPost(bp entities.BlogPost) error
+	EditBlogPost(bp entities.BlogPost) error
+	DeleteBlogPost(ID string) error
+	AddComment(cm entities.BPComment) error
+
 	//chart
 	GetChartInfo(filter entities.ChartFilter) map[string]int
 }

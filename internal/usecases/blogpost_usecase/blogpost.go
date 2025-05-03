@@ -43,3 +43,7 @@ func (b *BlogPostUseCase) GetBlogPosts(filter entities.BPFilter) ([]entities.Min
 	}
 	return chosenones, nil
 }
+
+func (b *BlogPostUseCase) GetComments(ID string) ([]entities.BPComment, error) {
+	return []entities.BPComment{}, nil
+}

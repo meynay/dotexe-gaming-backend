@@ -24,6 +24,7 @@ type BPComment struct {
 	ID         primitive.ObjectID `json:"_id" bson:"_id"`
 	BlogPostID primitive.ObjectID `json:"blogpost_id" bson:"blogpost_id"`
 	Replier    string             `json:"replier" bson:"replier"`
+	IsAdmin    bool               `json:"is_admin" bson:"is_admin"`
 	Comment    string             `json:"comment" bson:"comment"`
 	CreatedAt  time.Time          `json:"created_at" bson:"created_at"`
 }

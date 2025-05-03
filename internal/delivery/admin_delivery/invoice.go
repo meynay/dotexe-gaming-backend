@@ -70,3 +70,11 @@ func (ad *AdminDelivery) ChangeInvoiceStatus(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "status changed for order"})
 }
+
+func (ad *AdminDelivery) GetNewInvoicesCount(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"count": ad.adminusecase.GetNewInvoicesCount()})
+}
+
+func (ad *AdminDelivery) GetMonthlySalesPrice(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"sales": ad.adminusecase.GetMonthlySalesPrice()})
+}

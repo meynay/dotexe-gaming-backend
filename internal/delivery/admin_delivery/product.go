@@ -172,3 +172,7 @@ func (ad *AdminDelivery) DeleteProduct(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "product deleted successfully"})
 }
+
+func (ad *AdminDelivery) GetActiveProductsCount(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"count": ad.adminusecase.GetActiveProductsCount()})
+}

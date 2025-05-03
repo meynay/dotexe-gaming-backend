@@ -13,6 +13,7 @@ import (
 	"store/internal/delivery/rating_delivery"
 	"store/internal/delivery/user_delivery"
 	"store/internal/repositories/admin_rep"
+	"store/internal/repositories/blogpost_rep"
 	"store/internal/repositories/category_rep"
 	"store/internal/repositories/comment_rep"
 	"store/internal/repositories/invoice_rep"
@@ -55,6 +56,8 @@ func StartServer() {
 	//collections
 	database := client.Database("store")
 	adminCollection := database.Collection(os.Getenv("ADMIN_COLLECTION"))
+	blogPostCommentCollection := database.Collection("bpcomment")
+	blogPostCollection := database.Collection("blogpost")
 	categoryCollection := database.Collection("category")
 	commentsCollection := database.Collection("comment")
 	invoicesCollection := database.Collection("invoice")
@@ -64,6 +67,7 @@ func StartServer() {
 
 	//repositories
 	adminRep := admin_rep.NewAdminRep(adminCollection)
+	blogPostRep := blogpost_rep.NewBlogPostRep(blogPostCollection, blogPostCommentCollection)
 	categoryRep := category_rep.NewCategoryRep(categoryCollection)
 	commentsRep := comment_rep.NewCommentRep(commentsCollection)
 	productRep := product_rep.NewProductRep(productCollection)
@@ -73,7 +77,7 @@ func StartServer() {
 
 	//usecases
 	cacher := cacher.NewCacher(os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PASS"))
-	adminUsecase := admin_usecase.NewAdminUsecase(productRep, categoryRep, invoiceRep, adminRep, userRep)
+	adminUsecase := admin_usecase.NewAdminUsecase(productRep, categoryRep, invoiceRep, adminRep, userRep, blogPostRep)
 	cartUsecase := cart_usecase.NewCartUsecase(productRep, userRep, invoiceRep)
 	commentUsecase := comment_usecase.NewCommentUsecase(commentsRep, userRep, adminRep)
 	faveUsecase := fave_usecase.NewFaveUsecase(userRep, productRep, categoryRep)
@@ -152,19 +156,33 @@ func StartServer() {
 	//admin group
 	adminroute := os.Getenv("ADMIN_ROUTE")
 	admin := router.Group(adminroute)
+	//admin side
 	admin.POST("/login", adminDelivery.Login)
 	admin.Use(a.AuthMiddleware())
 	admin.GET("/info", adminDelivery.GetInfo)
 	admin.POST("/addadmin", adminDelivery.AddAdmin)
 	admin.PUT("/fillfields", adminDelivery.FillFields)
+	//product side
 	admin.POST("/addproduct", adminDelivery.AddProduct)
+	admin.PUT("/editproduct/:productid", adminDelivery.EditProduct)
+	admin.DELETE("/deleteproduct/:productid", adminDelivery.DeleteProduct)
+	admin.GET("/activeproductscount", adminDelivery.GetActiveProductsCount)
+	//category side
 	admin.POST("/addcategory", adminDelivery.AddCategory)
+	admin.PUT("/editcategory/:categoryid", adminDelivery.EditCategory)
+	admin.DELETE("/deletecategory/:categoryid", adminDelivery.DeleteCategory)
+	//order side
 	admin.GET("/invoices", adminDelivery.GetInvoices)
 	admin.GET("/invoice/:invoiceid", adminDelivery.GetInvoice)
 	admin.PUT("/changeorderstatus/:invoiceid", adminDelivery.ChangeInvoiceStatus)
-	admin.DELETE("/deleteproduct/:productid", adminDelivery.DeleteProduct)
-	admin.DELETE("/deletecategory/:categoryid", adminDelivery.DeleteCategory)
-	admin.PUT("/editproduct/:productid", adminDelivery.EditProduct)
-	admin.PUT("/editcategory/:categoryid", adminDelivery.EditCategory)
+	admin.GET("/ordercount", adminDelivery.GetNewInvoicesCount)
+	admin.GET("/monthlysales", adminDelivery.GetMonthlySalesPrice)
+	//user side
+	admin.GET("/user/:userid", adminDelivery.GetUser)
+	admin.GET("/activeusers", adminDelivery.GetActiveUsers)
+	admin.GET("/activeuserscount", adminDelivery.GetActiveUsersCount)
+	//chart
+	admin.GET("/chart", adminDelivery.GetChart)
+
 	router.Run(":8080")
 }
