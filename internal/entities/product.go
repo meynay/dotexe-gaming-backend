@@ -52,6 +52,7 @@ type Filter struct {
 	Page          int                `json:"page"`
 	NumberOfItems int                `json:"number_of_items"`
 	Order         int                `json:"order"`
+	Available     bool               `json:"only_available"`
 }
 
 type PScore struct {
