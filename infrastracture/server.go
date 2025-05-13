@@ -1,8 +1,8 @@
 package infrastracture
 
 import (
-	"context"
 	"fmt"
+	"log"
 	"os"
 	"store/internal/delivery/admin_delivery"
 	"store/internal/delivery/cart_delivery"
@@ -12,6 +12,7 @@ import (
 	"store/internal/delivery/product_delivery"
 	"store/internal/delivery/rating_delivery"
 	"store/internal/delivery/user_delivery"
+	"store/internal/entities"
 	"store/internal/repositories/admin_rep"
 	"store/internal/repositories/blogpost_rep"
 	"store/internal/repositories/category_rep"
@@ -34,46 +35,50 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-contrib/gzip"
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"github.com/joho/godotenv"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
+	"gorm.io/gorm/logger"
 )
 
+func GetConnection() *gorm.DB {
+	user := os.Getenv("DB_USER")
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	db := os.Getenv("DB_DB")
+	pass := os.Getenv("DB_PASSWORD")
+	ssl := os.Getenv("DB_SSL_MODE")
+	connString := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s", host, user, pass, db, port, ssl)
+	DB, err := gorm.Open(postgres.Open(connString), &gorm.Config{Logger: logger.Default.LogMode(logger.Info)})
+	if err != nil {
+		panic("couldn't connect to database")
+	}
+	return DB
+}
+
 func StartServer() {
-	connectionString := os.Getenv("MONGO_CON_STRING")
-	clientOptions := options.Client().ApplyURI(connectionString)
-	client, err := mongo.Connect(context.TODO(), clientOptions)
+	err := godotenv.Load()
 	if err != nil {
-		panic(err)
+		panic("cannot load dotenv")
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	err = client.Ping(ctx, nil)
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println("Connected to MongoDB!")
 
+	db := GetConnection()
 	//collections
-	database := client.Database("store")
-	adminCollection := database.Collection(os.Getenv("ADMIN_COLLECTION"))
-	blogPostCommentCollection := database.Collection("bpcomment")
-	blogPostCollection := database.Collection("blogpost")
-	categoryCollection := database.Collection("category")
-	commentsCollection := database.Collection("comment")
-	invoicesCollection := database.Collection("invoice")
-	productCollection := database.Collection("product")
-	ratesCollection := database.Collection("rating")
-	userCollection := database.Collection("user")
-
+	err = db.AutoMigrate(&entities.User{}, &entities.Admin{}, &entities.Product{}, &entities.Activity{}, &entities.BlogPost{}, &entities.BPComment{}, &entities.Comment{}, &entities.Invoice{}, &entities.Category{}, &entities.Rating{})
+	if err != nil {
+		log.Println(err)
+		return
+	}
 	//repositories
-	adminRep := admin_rep.NewAdminRep(adminCollection)
-	blogPostRep := blogpost_rep.NewBlogPostRep(blogPostCollection, blogPostCommentCollection)
-	categoryRep := category_rep.NewCategoryRep(categoryCollection)
-	commentsRep := comment_rep.NewCommentRep(commentsCollection)
-	productRep := product_rep.NewProductRep(productCollection)
-	invoiceRep := invoice_rep.NewInvoiceRep(invoicesCollection)
-	ratingRep := rating_rep.NewRatingRep(ratesCollection)
-	userRep := user_rep.NewUserRepository(userCollection)
+	adminRep := admin_rep.NewAdminRep(db)
+	blogPostRep := blogpost_rep.NewBlogPostRep(db)
+	categoryRep := category_rep.NewCategoryRep(db)
+	commentsRep := comment_rep.NewCommentRep(db)
+	productRep := product_rep.NewProductRep(db)
+	invoiceRep := invoice_rep.NewInvoiceRep(db)
+	ratingRep := rating_rep.NewRatingRep(db)
+	userRep := user_rep.NewUserRepository(db)
+	adminRep.AddAdmin(os.Getenv("ADMIN_USERNAME"), os.Getenv("ADMIN_PASSWORD"))
 
 	//usecases
 	cacher := cacher.NewCacher(os.Getenv("REDIS_HOST"), os.Getenv("REDIS_PASS"))

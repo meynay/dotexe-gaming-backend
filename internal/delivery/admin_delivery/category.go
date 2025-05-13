@@ -7,11 +7,11 @@ import (
 	"os"
 	"path/filepath"
 	"store/internal/entities"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (ad *AdminDelivery) AddCategory(c *gin.Context) {
@@ -127,8 +127,8 @@ func (ad *AdminDelivery) EditCategory(c *gin.Context) {
 }
 
 func (ad *AdminDelivery) DeleteCategory(c *gin.Context) {
-	id, _ := primitive.ObjectIDFromHex(c.Param("categoryid"))
-	err := ad.adminusecase.DeleteCategory(id)
+	id, _ := strconv.Atoi(c.Param("categoryid"))
+	err := ad.adminusecase.DeleteCategory(uint(id))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": err})
 		return

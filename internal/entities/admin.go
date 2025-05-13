@@ -3,18 +3,19 @@ package entities
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"gorm.io/gorm"
 )
 
 type Admin struct {
-	ID        primitive.ObjectID `json:"_id" bson:"_id"`
-	Username  string             `json:"username" bson:"username"`
-	Phone     string             `json:"phone_number" bson:"phone_number"`
-	Password  string             `json:"password" bson:"password"`
-	FirstName string             `json:"firstname" bson:"firstname"`
-	LastName  string             `json:"lastname" bson:"lastname"`
-	Image     string             `json:"image" bson:"image"`
-	Bio       string             `json:"bio" bson:"bio"`
+	gorm.Model
+
+	Username  string `gorm:"type:varchar(50);unique;not null" json:"username"`
+	Phone     string `gorm:"type:varchar(20);unique;not null" json:"phone_number"`
+	Password  string `gorm:"type:varchar(100);not null" json:"-"`
+	FirstName string `gorm:"type:varchar(50);not null" json:"firstname"`
+	LastName  string `gorm:"type:varchar(50);not null" json:"lastname"`
+	Image     string `gorm:"type:text" json:"image"`
+	Bio       string `gorm:"type:text" json:"bio"`
 }
 
 type ChartFilter struct {

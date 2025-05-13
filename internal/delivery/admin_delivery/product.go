@@ -9,10 +9,10 @@ import (
 	"path/filepath"
 	"store/internal/entities"
 	"store/pkg"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (ad *AdminDelivery) AddProduct(c *gin.Context) {
@@ -79,7 +79,7 @@ func (ad *AdminDelivery) AddProduct(c *gin.Context) {
 		link := fmt.Sprintf("%sproduct/%s", host, secondaryFilename)
 		imageLinks = append(imageLinks, link)
 	}
-	product.Images = imageLinks
+	product.Images = entities.JSONB{"images": imageLinks}
 	err = ad.adminusecase.AddProduct(product)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
@@ -153,7 +153,7 @@ func (ad *AdminDelivery) EditProduct(c *gin.Context) {
 		imageLinks = append(imageLinks, link)
 	}
 	images := product.Images
-	images = append(images, imageLinks...)
+	images = entities.JSONB{"images": imageLinks}
 	product.Images = images
 	err = ad.adminusecase.EditProduct(product)
 	if err != nil {
@@ -164,8 +164,8 @@ func (ad *AdminDelivery) EditProduct(c *gin.Context) {
 }
 
 func (ad *AdminDelivery) DeleteProduct(c *gin.Context) {
-	id, _ := primitive.ObjectIDFromHex(c.Param("productid"))
-	err := ad.adminusecase.DeleteProduct(id)
+	id, _ := strconv.Atoi(c.Param("productid"))
+	err := ad.adminusecase.DeleteProduct(uint(id))
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return

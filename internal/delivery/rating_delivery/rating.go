@@ -4,10 +4,9 @@ import (
 	"net/http"
 	"store/internal/entities"
 	"store/internal/usecases/rating_usecase"
-	"time"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type RatingDelivery struct {
@@ -19,17 +18,16 @@ func NewRatingDelivery(ru *rating_usecase.RatingUsecase) *RatingDelivery {
 }
 
 func (rd *RatingDelivery) RateProduct(c *gin.Context) {
-	productid, _ := primitive.ObjectIDFromHex(c.Param("productid"))
+	productid, _ := strconv.Atoi(c.Param("productid"))
 	userid, exists := c.Get("id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
 		return
 	}
-	userID, ok := userid.(string)
+	userID, ok := userid.(uint)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 	}
-	userd, _ := primitive.ObjectIDFromHex(userID)
 	input := struct {
 		Review string  `json:"review"`
 		Rate   float64 `json:"rate"`
@@ -39,11 +37,10 @@ func (rd *RatingDelivery) RateProduct(c *gin.Context) {
 		return
 	}
 	rate := entities.Rating{
-		UserID:    userd,
-		ProductID: productid,
+		UserID:    userID,
+		ProductID: uint(productid),
 		Rate:      input.Rate,
 		Review:    input.Review,
-		CreatedAt: time.Now(),
 		Likes:     0,
 		Dislikes:  0,
 	}
@@ -56,24 +53,23 @@ func (rd *RatingDelivery) RateProduct(c *gin.Context) {
 }
 
 func (rd *RatingDelivery) GetRates(c *gin.Context) {
-	productid, _ := primitive.ObjectIDFromHex(c.Param("productid"))
-	out := rd.ratingusecase.GetRates(productid)
+	productid, _ := strconv.Atoi(c.Param("productid"))
+	out := rd.ratingusecase.GetRates(uint(productid))
 	c.JSON(http.StatusOK, out)
 }
 
 func (rd *RatingDelivery) GetRate(c *gin.Context) {
-	productid, _ := primitive.ObjectIDFromHex(c.Param("productid"))
+	productid, _ := strconv.Atoi((c.Param("productid")))
 	userid, exists := c.Get("id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
 		return
 	}
-	userID, ok := userid.(string)
+	userID, ok := userid.(uint)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 	}
-	userd, _ := primitive.ObjectIDFromHex(userID)
-	rate, err := rd.ratingusecase.GetRating(productid, userd)
+	rate, err := rd.ratingusecase.GetRating(uint(productid), userID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "product is not rated by user"})
 		return

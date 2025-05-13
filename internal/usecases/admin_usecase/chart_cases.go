@@ -11,7 +11,7 @@ func (au *AdminUsecase) GetChartInfo(filter entities.ChartFilter) map[string]int
 	invoices := au.invoicerep.GetAllInvoices()
 	neededInvoices := []entities.Invoice{}
 	for _, invoice := range invoices {
-		if invoice.InvoiceDate.Before(filter.To) && invoice.InvoiceDate.After(filter.From) {
+		if invoice.CreatedAt.Before(filter.To) && invoice.CreatedAt.After(filter.From) {
 			neededInvoices = append(neededInvoices, invoice)
 		}
 	}
@@ -22,10 +22,10 @@ func (au *AdminUsecase) GetChartInfo(filter entities.ChartFilter) map[string]int
 		filter.From = filter.From.AddDate(0, 0, 1)
 	}
 	sort.Slice(neededInvoices, func(i, j int) bool {
-		return neededInvoices[i].InvoiceDate.Before(neededInvoices[j].InvoiceDate)
+		return neededInvoices[i].CreatedAt.Before(neededInvoices[j].CreatedAt)
 	})
 	for _, invoice := range neededInvoices {
-		y, m, d := invoice.InvoiceDate.Date()
+		y, m, d := invoice.CreatedAt.Date()
 		str := fmt.Sprintf("%d-%v-%d", y, m, d)
 		if filter.ShowType == entities.OrdersCount {
 			data[str] += 1

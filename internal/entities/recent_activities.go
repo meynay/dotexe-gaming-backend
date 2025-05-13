@@ -1,14 +1,23 @@
 package entities
 
 import (
-	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"gorm.io/gorm"
 )
 
-type Activities struct {
-	ID        primitive.ObjectID `json:"_id" bson:"_id"`
-	Type      string             `json:"activity_type" bson:"activity_type"`
-	CreatedAt time.Time          `json:"created_at" bson:"created_at"`
-	Payload   string             `json:"payload" bson:"payload"`
+type Activity struct {
+	gorm.Model
+	Type      int    `gorm:"type:smallint;not null;index" json:"activity_type"`
+	Payload   string `gorm:"type:jsonb;not null" json:"payload"`
+	IPAddress string `gorm:"type:varchar(45)" json:"ip_address"`
+	UserAgent string `gorm:"type:text" json:"user_agent"`
+	UserID    uint   `gorm:"index" json:"user_id"`
 }
+
+const (
+	AddProductActivity = iota
+	EditProductActivity
+	DeleteProductActivity
+	UserSignupActivity
+	AddOrderActivity
+	ChangeOrderStatusActivity
+)

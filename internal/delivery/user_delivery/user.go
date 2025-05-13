@@ -5,7 +5,6 @@ import (
 	"store/internal/entities"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (ud *UserDelivery) GetInfo(c *gin.Context) {
@@ -14,12 +13,11 @@ func (ud *UserDelivery) GetInfo(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
 		return
 	}
-	userID, ok := userid.(string)
+	userID, ok := userid.(uint)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 	}
-	userd, _ := primitive.ObjectIDFromHex(userID)
-	user, err := ud.uu.GetInfo(userd)
+	user, err := ud.uu.GetInfo(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
@@ -33,17 +31,16 @@ func (ud *UserDelivery) FillInfo(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
 		return
 	}
-	userID, ok := userid.(string)
+	userID, ok := userid.(uint)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 	}
-	userd, _ := primitive.ObjectIDFromHex(userID)
 	var user entities.User
 	if c.BindJSON(&user) != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad json format"})
 		return
 	}
-	user.ID = userd
+	user.ID = userID
 	err := ud.uu.FillInfo(user)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
@@ -58,11 +55,10 @@ func (ud *UserDelivery) ResetPassword(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
 		return
 	}
-	userID, ok := userid.(string)
+	userID, ok := userid.(uint)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 	}
-	userd, _ := primitive.ObjectIDFromHex(userID)
 	pass := struct {
 		Password string `json:"password"`
 	}{}
@@ -70,7 +66,7 @@ func (ud *UserDelivery) ResetPassword(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad json"})
 		return
 	}
-	err := ud.uu.ResetPassword(userd, pass.Password)
+	err := ud.uu.ResetPassword(userID, pass.Password)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return

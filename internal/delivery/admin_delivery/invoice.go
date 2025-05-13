@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (ad *AdminDelivery) GetInvoices(c *gin.Context) {
@@ -50,8 +49,8 @@ func (ad *AdminDelivery) GetInvoices(c *gin.Context) {
 }
 
 func (ad *AdminDelivery) GetInvoice(c *gin.Context) {
-	id, _ := primitive.ObjectIDFromHex(c.Param("invoiceid"))
-	name, phone, invoice, err := ad.adminusecase.GetInvoice(id)
+	id, _ := strconv.Atoi(c.Param("invoiceid"))
+	name, phone, invoice, err := ad.adminusecase.GetInvoice(uint(id))
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "invoice not found"})
 		return
@@ -60,10 +59,10 @@ func (ad *AdminDelivery) GetInvoice(c *gin.Context) {
 }
 
 func (ad *AdminDelivery) ChangeInvoiceStatus(c *gin.Context) {
-	id, _ := primitive.ObjectIDFromHex(c.Param("invoiceid"))
+	id, _ := strconv.Atoi(c.Param("invoiceid"))
 	status := c.Query("status")
 	stat, _ := strconv.Atoi(status)
-	err := ad.adminusecase.ChangeInvoiceStatus(id, stat)
+	err := ad.adminusecase.ChangeInvoiceStatus(uint(id), stat)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return

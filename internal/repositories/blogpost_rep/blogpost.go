@@ -1,80 +1,57 @@
 package blogpost_rep
 
 import (
-	"context"
 	"fmt"
 	"store/internal/entities"
-	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
+	"gorm.io/gorm"
 )
 
 type BlogPostRep struct {
-	bpdb  *mongo.Collection
-	bpcdb *mongo.Collection
+	bpdb *gorm.DB
 }
 
-func NewBlogPostRep(bp *mongo.Collection, bpc *mongo.Collection) *BlogPostRep {
-	return &BlogPostRep{bpdb: bp, bpcdb: bpc}
+func NewBlogPostRep(bp *gorm.DB) *BlogPostRep {
+	return &BlogPostRep{bpdb: bp}
 }
 
 func (bp *BlogPostRep) AddBlogPost(b entities.BlogPost) error {
-	_, err := bp.bpdb.InsertOne(context.TODO(), b)
-	if err != nil {
+	tx := bp.bpdb.Create(&b)
+	if tx.Error != nil {
 		return fmt.Errorf("couldn't insert blogpost")
 	}
 	return nil
 }
 
-func (bp *BlogPostRep) GetBlogPost(ID string) (entities.BlogPost, error) {
-	res := bp.bpdb.FindOne(context.TODO(), bson.M{
-		"_id": ID,
-	})
-	if res.Err() != nil {
-		return entities.BlogPost{}, fmt.Errorf("no documents found")
-	}
+func (bp *BlogPostRep) GetBlogPost(ID uint) (entities.BlogPost, error) {
 	var blogpost entities.BlogPost
-	err := res.Decode(&blogpost)
-	if err != nil {
-		return entities.BlogPost{}, fmt.Errorf("unable to decode results")
+	res := bp.bpdb.First(&blogpost, ID)
+	if res.Error != nil {
+		return entities.BlogPost{}, fmt.Errorf("no documents found")
 	}
 	return blogpost, nil
 }
 
 func (bp *BlogPostRep) GetBlogPosts() ([]entities.BlogPost, error) {
-	cur, err := bp.bpdb.Find(context.TODO(), bson.M{})
 	var posts []entities.BlogPost
-	if err != nil {
-		return posts, err
-	}
-	err = cur.Decode(&posts)
-	if err != nil {
-		return posts, fmt.Errorf("can't decode blogposts")
+	tx := bp.bpdb.Find(&posts)
+	if tx.Error != nil {
+		return posts, tx.Error
 	}
 	return posts, nil
 }
 
 func (bp *BlogPostRep) EditBlogPost(b entities.BlogPost) error {
-	_, err := bp.bpdb.UpdateOne(context.TODO(), bson.M{
-		"_id": b.ID,
-	}, bson.M{"$set": bson.M{
-		"title":       b.Title,
-		"content":     b.Content,
-		"image":       b.Image,
-		"category_id": b.Category_id,
-		"updated_at":  time.Now(),
-		"tags":        b.Tags,
-	}})
-	if err != nil {
+	tx := bp.bpdb.Save(&b)
+	if tx.Error != nil {
 		return fmt.Errorf("couldn't update blogpost")
 	}
 	return nil
 }
 
-func (bp *BlogPostRep) DeleteBlogPost(ID string) error {
-	_, err := bp.bpdb.DeleteOne(context.TODO(), bson.M{"_id": ID})
-	if err != nil {
+func (bp *BlogPostRep) DeleteBlogPost(ID uint) error {
+	tx := bp.bpdb.Delete(&entities.BlogPost{}, ID)
+	if tx.Error != nil {
 		return fmt.Errorf("couldn't delete blogpost")
 	}
 	return nil

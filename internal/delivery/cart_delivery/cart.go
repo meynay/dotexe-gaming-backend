@@ -3,9 +3,9 @@ package cart_delivery
 import (
 	"net/http"
 	"store/internal/usecases/cart_usecase"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type CartDelivery struct {
@@ -17,18 +17,17 @@ func NewCartDelivery(cu *cart_usecase.CartUsecase) *CartDelivery {
 }
 
 func (cd *CartDelivery) AddToCart(c *gin.Context) {
-	productid, _ := primitive.ObjectIDFromHex(c.Param("id"))
+	productid, _ := strconv.Atoi(c.Param("id"))
 	userid, exists := c.Get("id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
 		return
 	}
-	userID, ok := userid.(string)
+	userID, ok := userid.(uint)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 	}
-	userd, _ := primitive.ObjectIDFromHex(userID)
-	err := cd.usecase.AddToCart(productid, userd)
+	err := cd.usecase.AddToCart(uint(productid), userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
@@ -37,20 +36,19 @@ func (cd *CartDelivery) AddToCart(c *gin.Context) {
 }
 
 func (cd *CartDelivery) ChangeCountInCart(c *gin.Context) {
-	productid, _ := primitive.ObjectIDFromHex(c.Param("id"))
+	productid, _ := strconv.Atoi(c.Param("id"))
 	userid, exists := c.Get("id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
 		return
 	}
-	userID, ok := userid.(string)
+	userID, ok := userid.(uint)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 	}
-	userd, _ := primitive.ObjectIDFromHex(userID)
 	change := c.Param("change")
 	if change == "inc" {
-		err := cd.usecase.IncreaseInCart(productid, userd)
+		err := cd.usecase.IncreaseInCart(uint(productid), userID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 			return
@@ -58,13 +56,13 @@ func (cd *CartDelivery) ChangeCountInCart(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "increased product count in cart"})
 		return
 	}
-	count, err := cd.usecase.IsInCart(productid, userd)
+	count, err := cd.usecase.IsInCart(uint(productid), userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 		return
 	}
 	if count == 1 {
-		err := cd.usecase.DeleteFromCart(productid, userd)
+		err := cd.usecase.DeleteFromCart(uint(productid), userID)
 		if err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 			return
@@ -72,7 +70,7 @@ func (cd *CartDelivery) ChangeCountInCart(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{"message": "deleted product from cart"})
 		return
 	}
-	err = cd.usecase.DecreaseInCart(productid, userd)
+	err = cd.usecase.DecreaseInCart(uint(productid), userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 		return
@@ -81,18 +79,17 @@ func (cd *CartDelivery) ChangeCountInCart(c *gin.Context) {
 }
 
 func (cd *CartDelivery) IsInCart(c *gin.Context) {
-	productid, _ := primitive.ObjectIDFromHex(c.Param("id"))
+	productid, _ := strconv.Atoi(c.Param("id"))
 	userid, exists := c.Get("id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
 		return
 	}
-	userID, ok := userid.(string)
+	userID, ok := userid.(uint)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 	}
-	userd, _ := primitive.ObjectIDFromHex(userID)
-	count, err := cd.usecase.IsInCart(productid, userd)
+	count, err := cd.usecase.IsInCart(uint(productid), userID)
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"message": "product is not in cart"})
 		return
@@ -106,12 +103,11 @@ func (cd *CartDelivery) GetCart(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
 		return
 	}
-	userID, ok := userid.(string)
+	userID, ok := userid.(uint)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 	}
-	userd, _ := primitive.ObjectIDFromHex(userID)
-	cart := cd.usecase.GetCart(userd)
+	cart := cd.usecase.GetCart(userID)
 	c.JSON(http.StatusOK, cart)
 }
 

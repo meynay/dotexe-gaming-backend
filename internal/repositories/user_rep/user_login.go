@@ -1,36 +1,31 @@
 package user_rep
 
 import (
-	"context"
 	"fmt"
 	"store/internal/entities"
 	"store/pkg"
 	"strings"
-	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"gorm.io/gorm"
 )
 
 type UserRepository struct {
-	db *mongo.Collection
+	db *gorm.DB
 }
 
-func NewUserRepository(db *mongo.Collection) *UserRepository {
+func NewUserRepository(db *gorm.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
 func (r *UserRepository) InsertUserByPhone(phone string) (*entities.User, error) {
 	user := entities.User{
-		Phone:     phone,
-		CreatedAt: time.Now(),
-		Faves:     []primitive.ObjectID{},
-		Cart:      []entities.Item{},
+		Phone: phone,
+		Faves: []uint{},
+		Cart:  []entities.Item{},
 	}
-	_, err := r.db.InsertOne(context.TODO(), user)
-	if err != nil {
-		return nil, err
+	tx := r.db.Create(&user)
+	if tx.Error != nil {
+		return nil, tx.Error
 	}
 	return r.GetUserByPhone(phone)
 }
@@ -42,22 +37,21 @@ func (r *UserRepository) InsertUserByEmail(email, password string) (*entities.Us
 	}
 	email = strings.ToLower(email)
 	user := entities.User{
-		Email:     email,
-		Password:  password,
-		CreatedAt: time.Now(),
-		Faves:     []primitive.ObjectID{},
-		Cart:      []entities.Item{},
+		Email:    email,
+		Password: password,
+		Faves:    []uint{},
+		Cart:     []entities.Item{},
 	}
-	_, err = r.db.InsertOne(context.TODO(), user)
-	if err != nil {
-		return nil, err
+	tx := r.db.Create(&user)
+	if tx.Error != nil {
+		return nil, tx.Error
 	}
 	return r.GetUserByEmail(email)
 }
 
 func (r *UserRepository) GetUserByPhone(phone string) (*entities.User, error) {
 	var user entities.User
-	err := r.db.FindOne(context.TODO(), bson.M{"phone": phone}).Decode(&user)
+	err := r.db.First(&user, entities.User{Phone: phone})
 	if err != nil {
 		return nil, fmt.Errorf("user not found")
 	}
@@ -67,7 +61,7 @@ func (r *UserRepository) GetUserByPhone(phone string) (*entities.User, error) {
 func (r *UserRepository) GetUserByEmail(email string) (*entities.User, error) {
 	var user entities.User
 	email = strings.ToLower(email)
-	err := r.db.FindOne(context.TODO(), bson.M{"email": email}).Decode(&user)
+	err := r.db.First(&user, entities.User{Email: email})
 	if err != nil {
 		return nil, fmt.Errorf("user not found")
 	}
@@ -77,7 +71,7 @@ func (r *UserRepository) GetUserByEmail(email string) (*entities.User, error) {
 func (r *UserRepository) CheckUser(email, password string) (*entities.User, error) {
 	var user entities.User
 	email = strings.ToLower(email)
-	err := r.db.FindOne(context.TODO(), bson.M{"email": email}).Decode(&user)
+	err := r.db.First(&user, entities.User{Email: email})
 	if err != nil {
 		return nil, fmt.Errorf("user not found")
 	}
@@ -87,17 +81,19 @@ func (r *UserRepository) CheckUser(email, password string) (*entities.User, erro
 	return &user, nil
 }
 
-func (r *UserRepository) SaveToken(userID primitive.ObjectID, token string) error {
-	_, err := r.db.UpdateOne(
-		context.TODO(),
-		bson.M{"_id": userID},
-		bson.M{"$set": bson.M{"refresh_token": token}},
-	)
-	return err
+func (r *UserRepository) SaveToken(userID uint, token string) error {
+	res := r.db.Model(entities.User{}).Where("id = ?", userID).Update("refresh_roken = ?", token)
+	return res.Error
 }
 
-func (r *UserRepository) TokenExists(userID primitive.ObjectID, token string) error {
+func (r *UserRepository) TokenExists(userID uint, token string) error {
 	var user entities.User
-	err := r.db.FindOne(context.TODO(), bson.M{"_id": userID, "refresh_token": token}).Decode(&user)
-	return err
+	tx := r.db.First(&user, userID)
+	if tx.Error != nil {
+		return tx.Error
+	}
+	if user.RefreshToken != token {
+		return fmt.Errorf("wrong refresh token")
+	}
+	return nil
 }

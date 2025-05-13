@@ -1,81 +1,92 @@
 package product_rep
 
 import (
-	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
+	"log"
 	"store/internal/entities"
-	"time"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"gorm.io/gorm"
 )
 
 type ProductRep struct {
-	prdb *mongo.Collection
+	prdb *gorm.DB
 }
 
-func NewProductRep(pr *mongo.Collection) *ProductRep {
+func NewProductRep(pr *gorm.DB) *ProductRep {
 	return &ProductRep{prdb: pr}
 }
 
 func (pr *ProductRep) AddProduct(p entities.Product) error {
-	_, err := pr.prdb.InsertOne(context.TODO(), p)
+	tagsJSON, err := json.Marshal(p.Tags)
 	if err != nil {
-		return fmt.Errorf("couldn't add product")
+		return err
 	}
+	p.Tags = nil
+	res := pr.prdb.Create(&p)
+
+	if res.Error != nil {
+		return fmt.Errorf("couldn't add product, %v", res.Error)
+	}
+	pr.prdb.Model(entities.Product{}).Where("id = ?", p.ID).Update("tags = ?", string(tagsJSON))
+	log.Printf("product %s with id %d is added\n", p.Name, p.ID)
+	pr.prdb.Create(&entities.Activity{
+		Type:    entities.AddProductActivity,
+		Payload: fmt.Sprintf("محصول %s با شناسه %d اضافه شد", p.Name, p.ID),
+	})
 	return nil
 }
-func (pr *ProductRep) GetProduct(ID primitive.ObjectID) (entities.Product, error) {
-	res := pr.prdb.FindOne(context.TODO(), bson.M{
-		"_id": ID,
-	})
+
+func (pr *ProductRep) GetProduct(ID uint) (entities.Product, error) {
 	var product entities.Product
-	if res.Err() != nil {
-		return product, fmt.Errorf("couldn't find product")
-	}
-	if res.Decode(&product) != nil {
-		return product, fmt.Errorf("couldn't decode product")
+	res := pr.prdb.Preload("Category").First(&product, ID)
+	if res.Error != nil {
+		if errors.Is(res.Error, gorm.ErrRecordNotFound) {
+			return product, fmt.Errorf("couldn't find product")
+		}
+		return product, fmt.Errorf("error occured, %v", res.Error)
 	}
 	return product, nil
 }
+
 func (pr *ProductRep) GetProducts() ([]entities.Product, error) {
-	cur, err := pr.prdb.Find(context.TODO(), bson.M{})
 	var products []entities.Product
-	if err != nil {
+	tx := pr.prdb.Find(&products)
+	if tx.Error != nil {
 		return products, fmt.Errorf("couldn't get products")
-	}
-	if cur.All(context.TODO(), &products) != nil {
-		return products, fmt.Errorf("couldn't decode products")
 	}
 	return products, nil
 }
 
 func (pr *ProductRep) EditProduct(p entities.Product) error {
-	_, err := pr.prdb.UpdateOne(context.TODO(), bson.M{
-		"_id": p.ID,
-	}, bson.M{"$set": bson.M{
-		"name":        p.Name,
-		"image":       p.Image,
-		"images":      p.Images,
-		"description": p.Description,
-		"price":       p.Price,
-		"stock":       p.Stock,
-		"info":        p.Info,
-		"off":         p.Off,
-		"category_id": p.CategoryID,
-		"tags":        p.Tags,
-		"updated_at":  time.Now(),
-	}})
-	if err != nil {
+	tx := pr.prdb.Where("id = ?", p.ID).Updates(entities.Product{
+		Name:        p.Name,
+		Image:       p.Image,
+		Images:      p.Images,
+		Description: p.Description,
+		Price:       p.Price,
+		Stock:       p.Stock,
+		Info:        p.Info,
+		Off:         p.Off,
+		CategoryID:  p.CategoryID,
+		Tags:        p.Tags,
+	},
+	)
+	if tx.Error != nil {
 		return fmt.Errorf("couldn't update product")
 	}
 	return nil
 }
 
-func (pr *ProductRep) DeleteProduct(ID primitive.ObjectID) error {
-	_, err := pr.prdb.DeleteOne(context.TODO(), bson.M{"_id": ID})
-	if err != nil {
+func (pr *ProductRep) DeleteProduct(ID uint) error {
+	var product entities.Product
+	tx := pr.prdb.First(&product, ID)
+	if errors.Is(tx.Error, gorm.ErrRecordNotFound) {
+		return fmt.Errorf("product not found")
+	}
+	tx = pr.prdb.Delete(&product)
+	if tx.Error != nil {
 		return fmt.Errorf("couldn't delete product")
 	}
 	return nil

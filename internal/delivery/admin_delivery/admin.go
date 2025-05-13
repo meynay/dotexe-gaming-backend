@@ -7,7 +7,6 @@ import (
 	"store/pkg/jwt"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type AdminDelivery struct {
@@ -30,8 +29,7 @@ func (ad *AdminDelivery) Login(c *gin.Context) {
 	}
 	id, err := ad.adminusecase.Login(inp.Username, inp.Password)
 	if err != nil {
-		id1, _ := primitive.ObjectIDFromHex("1")
-		if id == id1 {
+		if id == 0 {
 			c.JSON(http.StatusNotAcceptable, gin.H{"error": "wrong password"})
 			return
 		}
@@ -73,13 +71,12 @@ func (ad *AdminDelivery) GetInfo(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
 		return
 	}
-	userID, ok := userid.(string)
+	userID, ok := userid.(uint)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 		return
 	}
-	userd, _ := primitive.ObjectIDFromHex(userID)
-	admin, err := ad.adminusecase.GetInfo(userd)
+	admin, err := ad.adminusecase.GetInfo(userID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
 		return
@@ -93,18 +90,17 @@ func (ad *AdminDelivery) FillFields(c *gin.Context) {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
 		return
 	}
-	userID, ok := userid.(string)
+	userID, ok := userid.(uint)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 		return
 	}
-	userd, _ := primitive.ObjectIDFromHex(userID)
 	var admin entities.Admin
 	if err := c.BindJSON(&admin); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "bad json format"})
 		return
 	}
-	admin.ID = userd
+	admin.ID = userID
 	err := ad.adminusecase.FillFields(admin)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})

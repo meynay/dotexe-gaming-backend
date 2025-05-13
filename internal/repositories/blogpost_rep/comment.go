@@ -1,32 +1,29 @@
 package blogpost_rep
 
 import (
-	"context"
 	"fmt"
 	"store/internal/entities"
-
-	"go.mongodb.org/mongo-driver/bson"
 )
 
 func (bp *BlogPostRep) AddComment(cm entities.BPComment) error {
-	_, err := bp.bpcdb.InsertOne(context.TODO(), cm)
-	if err != nil {
+	tx := bp.bpdb.Create(&cm)
+	if tx.Error != nil {
 		return fmt.Errorf("couldn't add comment")
 	}
 	return nil
 }
 
-func (bp *BlogPostRep) GetComments(ID string) ([]entities.BPComment, error) {
+func (bp *BlogPostRep) GetComments(ID uint) ([]entities.BPComment, error) {
 	var comments []entities.BPComment
-	cur, err := bp.bpcdb.Find(context.TODO(), bson.M{
-		"blogpost_id": ID,
-	})
-	if err != nil {
+	tx := bp.bpdb.Find(&comments)
+	if tx.Error != nil {
 		return comments, fmt.Errorf("couldn't find comments")
 	}
-	err = cur.Decode(&comments)
-	if err != nil {
-		return comments, fmt.Errorf("couldn't decode comments")
+	out := []entities.BPComment{}
+	for _, comment := range comments {
+		if comment.BlogPostID == ID {
+			out = append(out, comment)
+		}
 	}
-	return comments, nil
+	return out, nil
 }

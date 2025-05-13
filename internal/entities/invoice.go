@@ -3,36 +3,40 @@ package entities
 import (
 	"time"
 
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"gorm.io/gorm"
 )
 
 type Item struct {
-	ProductID primitive.ObjectID `json:"product_id" bson:"product_id"`
-	Count     int                `json:"count" bson:"count"`
-	Price     int                `json:"price" bson:"price"`
-	Off       float64            `json:"off" bson:"off"`
+	gorm.Model
+	UserID    uint    `gorm:"index;not null" json:"-"`
+	User      User    `gorm:"foreignKey:UserID" json:"-"`
+	ProductID uint    `json:"product_id" bson:"product_id"`
+	Product   Product `gorm:"foreignKey:ProductID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Count     int     `json:"count" bson:"count"`
+	Price     int     `json:"price" bson:"price"`
+	Off       float64 `json:"off" bson:"off"`
 }
 
 type CartItem struct {
-	ProductID   primitive.ObjectID `json:"product_id"`
-	ProductName string             `json:"product_name"`
-	Image       string             `json:"image"`
-	Count       int                `json:"count"`
-	Price       int                `json:"price"`
-	Off         float64            `json:"off"`
+	ProductID   uint    `json:"product_id"`
+	ProductName string  `json:"product_name"`
+	Image       string  `json:"image"`
+	Count       int     `json:"count"`
+	Price       int     `json:"price"`
+	Off         float64 `json:"off"`
 }
 
 type Invoice struct {
-	ID            primitive.ObjectID `json:"_id" bson:"_id"`
-	UserID        primitive.ObjectID `json:"user_id" bson:"user_id"`
-	InvoiceDate   time.Time          `json:"date" bson:"date"`
-	OrderStatus   int                `json:"order_status" bson:"order_status"`
-	Items         []Item             `json:"items" bson:"items"`
-	DeliveryPrice int                `json:"delivery_price" bson:"delivery_price"`
-	CouponApplied bool               `json:"coupon_applied" bson:"coupon_applied"`
-	CouponOff     float64            `json:"coupon_off" bson:"coupon_off"`
-	CouponPrice   int                `json:"coupon_price" bson:"coupon_price"`
-	TotalPrice    int                `json:"total" bson:"total"`
+	gorm.Model
+	UserID        uint    `gorm:"index;not null" json:"user_id"`
+	User          User    `gorm:"foreignKey:UserID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;" json:"user,omitempty"`
+	OrderStatus   int     `gorm:"type:smallint;default:0;not null" json:"order_status"`
+	Items         []Item  `gorm:"type:jsonb;not null" json:"items"`
+	DeliveryPrice int     `gorm:"type:integer;not null;default:0" json:"delivery_price"`
+	CouponApplied bool    `gorm:"default:false;not null" json:"coupon_applied"`
+	CouponOff     float64 `gorm:"type:numeric(5,2);default:0.0" json:"coupon_off"`
+	CouponPrice   int     `gorm:"type:integer;default:0" json:"coupon_price"`
+	TotalPrice    int     `gorm:"type:integer;not null" json:"total"`
 }
 
 type InvoiceFilter struct {

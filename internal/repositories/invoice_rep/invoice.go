@@ -1,68 +1,62 @@
 package invoice_rep
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"store/internal/entities"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"gorm.io/gorm"
 )
 
 type InvoiceRep struct {
-	rep *mongo.Collection
+	rep *gorm.DB
 }
 
-func NewInvoiceRep(irep *mongo.Collection) *InvoiceRep {
+func NewInvoiceRep(irep *gorm.DB) *InvoiceRep {
 	return &InvoiceRep{rep: irep}
 }
 
 func (ir *InvoiceRep) AddInvoice(invoice entities.Invoice) error {
-	_, err := ir.rep.InsertOne(context.TODO(), invoice)
-	if err != nil {
+	tx := ir.rep.Create(&invoice)
+	if tx.Error != nil {
 		return fmt.Errorf("couldn't insert invoice")
 	}
-	log.Printf("invoice %s added with status %d", invoice.ID, invoice.OrderStatus)
+	log.Printf("سفارش %d با وضعیت %d اضافه شد", invoice.ID, invoice.OrderStatus)
 	return nil
 }
 
-func (ir *InvoiceRep) GetInvoice(id primitive.ObjectID) (entities.Invoice, error) {
+func (ir *InvoiceRep) GetInvoice(id uint) (entities.Invoice, error) {
 	invoice := entities.Invoice{}
-	res := ir.rep.FindOne(context.TODO(), bson.M{"_id": id})
-	if res.Err() != nil {
+	res := ir.rep.First(&invoice, id)
+	if res.Error != nil {
 		return invoice, fmt.Errorf("couldn't find invoice with given id")
 	}
-	res.Decode(&invoice)
 	return invoice, nil
 }
 
-func (ir *InvoiceRep) GetInvoices(userid primitive.ObjectID) ([]entities.Invoice, error) {
+func (ir *InvoiceRep) GetInvoices(userid uint) ([]entities.Invoice, error) {
 	invoices := []entities.Invoice{}
-	res, err := ir.rep.Find(context.TODO(), bson.M{"user_id": userid})
-	if err != nil {
+	tx := ir.rep.Find(&invoices, entities.Invoice{UserID: userid})
+	if tx.Error != nil {
 		return invoices, fmt.Errorf("error getting invoices")
 	}
-	res.All(context.TODO(), &invoices)
 	return invoices, nil
 }
 
 func (ir *InvoiceRep) GetAllInvoices() []entities.Invoice {
 	invoices := []entities.Invoice{}
-	res, err := ir.rep.Find(context.TODO(), bson.M{})
-	if err != nil {
-		return invoices
+	tx := ir.rep.Find(&invoices)
+	if tx.Error != nil {
+		return []entities.Invoice{}
 	}
-	res.All(context.TODO(), &invoices)
 	return invoices
 }
 
-func (ir *InvoiceRep) ChangeStatus(invoiceid primitive.ObjectID, status int) error {
-	_, err := ir.rep.UpdateOne(context.TODO(), bson.M{"_id": invoiceid}, bson.M{"$set": bson.M{"order_status": status}})
-	if err != nil {
+func (ir *InvoiceRep) ChangeStatus(invoiceid uint, status int) error {
+	tx := ir.rep.Model(entities.Invoice{}).Where("id = ?", invoiceid).Update("status = ?", status)
+	if tx.Error != nil {
 		return fmt.Errorf("couldn't update status")
 	}
-	log.Printf("Updated invoice %s to status %d", invoiceid, status)
+	log.Printf("سفارش به شماره %d به وضعیت %d تغییر یافت.", invoiceid, status)
 	return nil
 }

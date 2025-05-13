@@ -8,8 +8,6 @@ import (
 	"store/internal/repositories/invoice_rep"
 	"store/internal/repositories/product_rep"
 	"store/internal/repositories/user_rep"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type AdminUsecase struct {
@@ -29,7 +27,7 @@ func (au *AdminUsecase) AddAdmin(username, password string) error {
 	return au.adminrep.AddAdmin(username, password)
 }
 
-func (au *AdminUsecase) GetInfo(adminID primitive.ObjectID) (entities.Admin, error) {
+func (au *AdminUsecase) GetInfo(adminID uint) (entities.Admin, error) {
 	return au.adminrep.GetInfo(adminID)
 }
 
@@ -37,6 +35,6 @@ func (au *AdminUsecase) FillFields(admin entities.Admin) error {
 	return au.adminrep.FillFields(admin)
 }
 
-func (au *AdminUsecase) Login(username, password string) (primitive.ObjectID, error) {
+func (au *AdminUsecase) Login(username, password string) (uint, error) {
 	return au.adminrep.Login(username, password)
 }

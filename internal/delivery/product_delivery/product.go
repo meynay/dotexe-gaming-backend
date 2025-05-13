@@ -1,13 +1,13 @@
 package product_delivery
 
 import (
+	"log"
 	"net/http"
 	"store/internal/entities"
 	"store/internal/usecases/product_usecase"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ProductDelivery struct {
@@ -19,21 +19,27 @@ func NewProductDelivery(u *product_usecase.ProductUseCase) *ProductDelivery {
 }
 
 func (pd *ProductDelivery) GetProduct(c *gin.Context) {
-	productid, _ := primitive.ObjectIDFromHex(c.Param("productid"))
-	product, err := pd.pu.GetProduct(productid)
-	if err.Error() == "couldn't find product" {
-		c.JSON(http.StatusNotFound, gin.H{"message": "no products found with given id"})
-		return
-	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "internal server error occured during decoding product"})
-		return
+	productid, _ := strconv.Atoi(c.Param("productid"))
+	product, err := pd.pu.GetProduct(uint(productid))
+	if err != nil {
+		if err.Error() == "couldn't find product" {
+			c.JSON(http.StatusNotFound, gin.H{"message": "no products found with given id"})
+			return
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "internal server error occured during decoding product"})
+			return
+		}
 	}
 	c.JSON(http.StatusOK, product)
 }
 
 func (pd *ProductDelivery) GetProducts(c *gin.Context) {
 	query := c.Query("query")
-	categoryid, _ := primitive.ObjectIDFromHex(c.Query("categoryid"))
+	log.Println("query:" + query)
+	categoryid, err := strconv.Atoi(c.Query("categoryid"))
+	if err != nil {
+		categoryid = 0
+	}
 	page, err := strconv.Atoi(c.Query("page"))
 	if err != nil {
 		page = 1
@@ -48,17 +54,19 @@ func (pd *ProductDelivery) GetProducts(c *gin.Context) {
 	}
 	products, pages, err := pd.pu.FilterProducts(entities.Filter{
 		Query:         query,
-		CategoryID:    categoryid,
+		CategoryID:    uint(categoryid),
 		Page:          page,
 		NumberOfItems: ipp,
 		Order:         order,
 	})
-	if err.Error() == "couldn't get products" {
-		c.JSON(http.StatusNotFound, gin.H{"message": "no products found with given filters"})
-		return
-	} else if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "server error occured during decoding products"})
-		return
+	if err != nil {
+		if err.Error() == "couldn't get products" {
+			c.JSON(http.StatusNotFound, gin.H{"message": "no products found with given filters"})
+			return
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"message": "server error occured during decoding products"})
+			return
+		}
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"pages":    pages,
@@ -77,6 +85,10 @@ func (pd *ProductDelivery) SearchQuery(c *gin.Context) {
 }
 
 func (pd *ProductDelivery) GetCategories(c *gin.Context) {
-	categories := pd.pu.GetCategories()
+	categories, err := pd.pu.GetCategories()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err})
+		return
+	}
 	c.JSON(http.StatusOK, categories)
 }

@@ -5,8 +5,6 @@ import (
 	"store/internal/repositories/admin_rep"
 	"store/internal/repositories/comment_rep"
 	"store/internal/repositories/user_rep"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type CommentUsecase struct {
@@ -23,29 +21,29 @@ func (cu *CommentUsecase) CommentOnProduct(c entities.Comment) error {
 	return cu.commentrep.AddComment(c)
 }
 
-func (cu *CommentUsecase) GetComments(productid primitive.ObjectID) []entities.CommentOut {
+func (cu *CommentUsecase) GetComments(productid uint) []entities.CommentOut {
 	cmnt, err := cu.commentrep.GetComments(productid)
 	comments := []entities.CommentOut{}
 	if err != nil {
 		return comments
 	}
 	for _, c := range cmnt {
-		newcomment := entities.CommentOut{}
+		var newcomment entities.CommentOut
 		if c.IsAdmin {
 			newcomment = entities.CommentOut{
 				ID:        c.ID,
-				Parent:    c.Parent,
+				CreatedAt: c.CreatedAt,
+				Parent:    *c.ParentID,
 				User:      cu.adminrep.GetName(c.UserID),
 				Comment:   c.Comment,
-				CreatedAt: c.CreatedAt,
 			}
 		} else {
 			newcomment = entities.CommentOut{
+				Parent:    *c.ParentID,
 				ID:        c.ID,
-				Parent:    c.Parent,
+				CreatedAt: c.CreatedAt,
 				User:      cu.userrep.GetUsername(c.UserID),
 				Comment:   c.Comment,
-				CreatedAt: c.CreatedAt,
 			}
 		}
 		comments = append(comments, newcomment)

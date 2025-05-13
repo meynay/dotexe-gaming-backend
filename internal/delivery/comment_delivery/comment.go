@@ -4,10 +4,9 @@ import (
 	"net/http"
 	"store/internal/entities"
 	"store/internal/usecases/comment_usecase"
-	"time"
+	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type CommentDelivery struct {
@@ -19,17 +18,16 @@ func NewCommentDelivery(cu *comment_usecase.CommentUsecase) *CommentDelivery {
 }
 
 func (cd *CommentDelivery) CommentOnProduct(c *gin.Context) {
-	productid, _ := primitive.ObjectIDFromHex(c.Param("productid"))
+	productid, _ := strconv.Atoi(c.Param("productid"))
 	userid, exists := c.Get("id")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"message": "userid not set"})
 		return
 	}
-	userID, ok := userid.(string)
+	userID, ok := userid.(uint)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"message": "error reading userid"})
 	}
-	userd, _ := primitive.ObjectIDFromHex(userID)
 	input := struct {
 		Comment string `json:"comment"`
 		Parent  string `json:"parent"`
@@ -42,14 +40,14 @@ func (cd *CommentDelivery) CommentOnProduct(c *gin.Context) {
 	if input.Parent == "" {
 		input.Parent = "0"
 	}
-	par, _ := primitive.ObjectIDFromHex(input.Parent)
+	par, _ := strconv.Atoi(input.Parent)
+	prnt := uint(par)
 	cmnt := entities.Comment{
 		Comment:   input.Comment,
 		IsAdmin:   input.IsAdmin,
-		UserID:    userd,
-		CreatedAt: time.Now(),
-		ProductID: productid,
-		Parent:    par,
+		UserID:    userID,
+		ProductID: uint(productid),
+		ParentID:  &prnt,
 	}
 	err := cd.commentusecase.CommentOnProduct(cmnt)
 	if err != nil {
@@ -60,7 +58,7 @@ func (cd *CommentDelivery) CommentOnProduct(c *gin.Context) {
 }
 
 func (cd *CommentDelivery) GetComments(c *gin.Context) {
-	productid, _ := primitive.ObjectIDFromHex(c.Param("productid"))
-	out := cd.commentusecase.GetComments(productid)
+	productid, _ := strconv.Atoi(c.Param("productid"))
+	out := cd.commentusecase.GetComments(uint(productid))
 	c.JSON(http.StatusOK, out)
 }

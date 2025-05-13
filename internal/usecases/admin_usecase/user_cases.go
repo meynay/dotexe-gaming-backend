@@ -4,8 +4,6 @@ import (
 	"store/internal/entities"
 	"store/pkg"
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (au *AdminUsecase) GetActiveUsersCount() int {
@@ -13,7 +11,7 @@ func (au *AdminUsecase) GetActiveUsersCount() int {
 }
 
 func (au *AdminUsecase) GetActiveUsers() []entities.User {
-	ids := []primitive.ObjectID{}
+	ids := []uint{}
 	invoices := au.GetInvoices(entities.InvoiceFilter{
 		Status:      entities.All,
 		CountToShow: 999999,
@@ -34,13 +32,13 @@ func (au *AdminUsecase) GetActiveUsers() []entities.User {
 	return users
 }
 
-func (au *AdminUsecase) GetUser(ID primitive.ObjectID) (entities.User, error) {
+func (au *AdminUsecase) GetUser(ID uint) (entities.User, error) {
 	user, err := au.userrep.GetInfo(ID)
 	if err != nil {
 		return user, err
 	}
 	user.Password = "encrypted"
-	user.Faves = []primitive.ObjectID{}
+	user.Faves = []uint{}
 	user.Cart = []entities.Item{}
 	return user, nil
 }

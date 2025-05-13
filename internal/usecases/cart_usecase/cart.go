@@ -5,9 +5,6 @@ import (
 	"store/internal/repositories/invoice_rep"
 	"store/internal/repositories/product_rep"
 	"store/internal/repositories/user_rep"
-	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type CartUsecase struct {
@@ -20,27 +17,27 @@ func NewCartUsecase(pr *product_rep.ProductRep, ur *user_rep.UserRepository, ir 
 	return &CartUsecase{productrep: pr, userrep: ur, invoicerep: ir}
 }
 
-func (cu *CartUsecase) AddToCart(productid, userid primitive.ObjectID) error {
+func (cu *CartUsecase) AddToCart(productid, userid uint) error {
 	return cu.userrep.AddToCart(productid, userid)
 }
 
-func (cu *CartUsecase) DeleteFromCart(productid, userid primitive.ObjectID) error {
+func (cu *CartUsecase) DeleteFromCart(productid, userid uint) error {
 	return cu.userrep.DeleteFromCart(productid, userid)
 }
 
-func (cu *CartUsecase) IncreaseInCart(productid, userid primitive.ObjectID) error {
+func (cu *CartUsecase) IncreaseInCart(productid, userid uint) error {
 	return cu.userrep.IncreaseInCart(productid, userid)
 }
 
-func (cu *CartUsecase) DecreaseInCart(productid, userid primitive.ObjectID) error {
+func (cu *CartUsecase) DecreaseInCart(productid, userid uint) error {
 	return cu.userrep.DecreaseInCart(productid, userid)
 }
 
-func (cu *CartUsecase) IsInCart(productid, userid primitive.ObjectID) (int, error) {
+func (cu *CartUsecase) IsInCart(productid, userid uint) (int, error) {
 	return cu.userrep.IsInCart(productid, userid)
 }
 
-func (cu *CartUsecase) GetCart(userid primitive.ObjectID) []entities.CartItem {
+func (cu *CartUsecase) GetCart(userid uint) []entities.CartItem {
 	items, err := cu.userrep.GetCart(userid)
 	if err != nil {
 		return []entities.CartItem{}
@@ -60,18 +57,26 @@ func (cu *CartUsecase) GetCart(userid primitive.ObjectID) []entities.CartItem {
 	return cartitems
 }
 
-func (cu *CartUsecase) FinalizeCart(userid primitive.ObjectID, delivery_price int) error {
+func (cu *CartUsecase) FinalizeCart(userid uint, delivery_price int) error {
 	items, err := cu.userrep.FinalizeCart(userid)
 	if err != nil {
 		return err
 	}
+	its := []entities.Item{}
+	for _, val := range items {
+		its = append(its, entities.Item{
+			ProductID: val.ProductID,
+			Count:     val.Count,
+			Price:     val.Price,
+			Off:       val.Off,
+		})
+	}
 	invoice := entities.Invoice{
 		UserID:        userid,
-		InvoiceDate:   time.Now(),
 		OrderStatus:   entities.Processing,
 		DeliveryPrice: delivery_price,
 		TotalPrice:    1,
-		Items:         items,
+		Items:         its,
 	}
 	return cu.invoicerep.AddInvoice(invoice)
 }

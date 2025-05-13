@@ -2,11 +2,9 @@ package cart_usecase
 
 import (
 	"store/internal/entities"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func (cu *CartUsecase) GetInvoices(userid primitive.ObjectID) []entities.Invoice {
+func (cu *CartUsecase) GetInvoices(userid uint) []entities.Invoice {
 	invoices, err := cu.invoicerep.GetInvoices(userid)
 	if err != nil {
 		return []entities.Invoice{}
@@ -14,7 +12,7 @@ func (cu *CartUsecase) GetInvoices(userid primitive.ObjectID) []entities.Invoice
 	return invoices
 }
 
-func (cu *CartUsecase) GetInvoice(userid, invoiceid primitive.ObjectID) entities.Invoice {
+func (cu *CartUsecase) GetInvoice(userid, invoiceid uint) entities.Invoice {
 	invoice, err := cu.invoicerep.GetInvoice(invoiceid)
 	if err != nil || invoice.UserID != userid {
 		return entities.Invoice{}

@@ -1,30 +1,27 @@
 package admin_rep
 
 import (
-	"context"
 	"fmt"
 	"store/internal/entities"
 	"store/pkg"
 	"strings"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"gorm.io/gorm"
 )
 
 type AdminRep struct {
-	rep *mongo.Collection
+	rep *gorm.DB
 }
 
-func NewAdminRep(ar *mongo.Collection) *AdminRep {
+func NewAdminRep(ar *gorm.DB) *AdminRep {
 	return &AdminRep{rep: ar}
 }
 
-func (ar *AdminRep) GetName(id primitive.ObjectID) string {
-	res := ar.rep.FindOne(context.TODO(), bson.M{"_id": id})
+func (ar *AdminRep) GetName(id uint) string {
 	admin := entities.Admin{}
-	if err := res.Decode(&admin); err != nil {
-		return err.Error()
+	res := ar.rep.First(&admin, id)
+	if res.Error != nil {
+		return ""
 	}
 	if admin.FirstName == "" && admin.LastName == "" {
 		return "ادمین"
@@ -33,12 +30,11 @@ func (ar *AdminRep) GetName(id primitive.ObjectID) string {
 }
 
 func (ar *AdminRep) AddAdmin(username, password string) error {
-	res := ar.rep.FindOne(context.TODO(), bson.M{"username": username})
 	admin := entities.Admin{}
-	res.Decode(&admin)
 	username = strings.ToLower(username)
-	if admin.Username == username {
-		return fmt.Errorf("this username exists")
+	res := ar.rep.First(&admin, entities.Admin{Username: username})
+	if res.Error == nil && admin.Username == username {
+		return fmt.Errorf("user exists")
 	}
 	pass, err := pkg.HashPassword(password)
 	if err != nil {
@@ -48,56 +44,48 @@ func (ar *AdminRep) AddAdmin(username, password string) error {
 		Password: pass,
 		Username: username,
 	}
-	_, err = ar.rep.InsertOne(context.TODO(), admin)
-	if err != nil {
-		return err
+	tx := ar.rep.Create(&admin)
+	if tx.Error != nil {
+		return tx.Error
 	}
 	return nil
 }
 
-func (ar *AdminRep) GetInfo(adminID primitive.ObjectID) (entities.Admin, error) {
-	res := ar.rep.FindOne(context.TODO(), bson.M{"_id": adminID})
+func (ar *AdminRep) GetInfo(adminID uint) (entities.Admin, error) {
 	admin := entities.Admin{}
-	err := res.Decode(&admin)
+	res := ar.rep.First(&admin, adminID)
+	if res.Error != nil {
+		return admin, res.Error
+	}
 	admin.Password = ""
-	return admin, err
+	return admin, nil
 }
 
 func (ar *AdminRep) FillFields(admin entities.Admin) error {
-	res := ar.rep.FindOne(context.TODO(), bson.M{"phone_number": admin.Phone})
 	var temp entities.Admin
-	if res.Decode(&temp) == nil {
-		if temp.ID != admin.ID {
-			return fmt.Errorf("phone number exists")
-		}
+	res := ar.rep.First(&temp, entities.Admin{Phone: admin.Phone})
+	if res.Error != nil {
+		return res.Error
 	}
-	_, err := ar.rep.UpdateOne(context.TODO(), bson.M{"_id": admin.ID},
-		bson.M{
-			"$set": bson.M{
-				"phone_number": admin.Phone,
-				"firstname":    admin.FirstName,
-				"lastname":     admin.LastName,
-				"image":        admin.Image,
-				"bio":          admin.Bio,
-			}},
-	)
-	if err != nil {
-		return err
+	if temp.ID != admin.ID {
+		return fmt.Errorf("phone number exists")
+	}
+	tx := ar.rep.Save(&admin)
+	if tx.Error != nil {
+		return tx.Error
 	}
 	return nil
 }
 
-func (ar *AdminRep) Login(username, password string) (primitive.ObjectID, error) {
+func (ar *AdminRep) Login(username, password string) (uint, error) {
 	username = strings.ToLower(username)
-	res := ar.rep.FindOne(context.TODO(), bson.M{"username": username})
 	admin := entities.Admin{}
-	if err := res.Decode(&admin); err != nil {
-		id, _ := primitive.ObjectIDFromHex("0")
-		return id, err
+	res := ar.rep.First(&admin, entities.Admin{Username: username})
+	if res.Error != nil {
+		return 0, res.Error
 	}
 	if pkg.CompareHashAndPassword(admin.Password, password) != nil {
-		id, _ := primitive.ObjectIDFromHex("1")
-		return id, fmt.Errorf("")
+		return 0, fmt.Errorf("wrong password")
 	}
 	return admin.ID, nil
 }

@@ -7,8 +7,6 @@ import (
 	"store/internal/repositories/product_rep"
 	"store/pkg"
 	"strings"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 type ProductUseCase struct {
@@ -20,7 +18,7 @@ func NewProductUseCase(r *product_rep.ProductRep, cr *category_rep.CategoryRep) 
 	return &ProductUseCase{rep: r, categoryrep: cr}
 }
 
-func (pu *ProductUseCase) GetProduct(ID primitive.ObjectID) (entities.Product, error) {
+func (pu *ProductUseCase) GetProduct(ID uint) (entities.Product, error) {
 	err := pu.rep.AddViewToProduct(ID)
 	if err != nil {
 		return entities.Product{}, err
@@ -32,7 +30,10 @@ func (pu *ProductUseCase) GetProducts(query string) ([]entities.ProductLess, []e
 	var prdcts []entities.ProductLess
 	var ctgrs []entities.Category
 	products, err := pu.rep.GetProducts()
-	categories := pu.categoryrep.GetCategories()
+	if err != nil {
+		return prdcts, ctgrs, err
+	}
+	categories, err := pu.categoryrep.GetCategories()
 	if err != nil {
 		return prdcts, ctgrs, err
 	}
@@ -62,11 +63,10 @@ func (pu *ProductUseCase) FilterProducts(filter entities.Filter) ([]entities.Pro
 	if err != nil {
 		return p, 0, err
 	}
-	z, _ := primitive.ObjectIDFromHex("0")
-	if filter.CategoryID != z {
+	if filter.CategoryID != 0 {
 		newproducts := []entities.Product{}
 		for _, product := range products {
-			if product.CategoryID == filter.CategoryID || pkg.Exists(filter.CategoryID, pu.categoryrep.GetParents(product.CategoryID)) {
+			if filter.CategoryID == 0 || product.CategoryID == filter.CategoryID || pkg.Exists(filter.CategoryID, pu.categoryrep.GetParents(product.CategoryID)) {
 				newproducts = append(newproducts, product)
 			}
 		}
@@ -101,7 +101,7 @@ func (pu *ProductUseCase) FilterProducts(filter entities.Filter) ([]entities.Pro
 		})
 	case entities.Newest:
 		sort.Slice(ps, func(i, j int) bool {
-			return ps[i].Pr.AddedAt.After(ps[j].Pr.AddedAt)
+			return ps[i].Pr.CreatedAt.After(ps[j].Pr.CreatedAt)
 		})
 	case entities.MostPurchased:
 		sort.Slice(ps, func(i, j int) bool {
@@ -141,6 +141,6 @@ func (pu *ProductUseCase) FilterProducts(filter entities.Filter) ([]entities.Pro
 	return p, pages, nil
 }
 
-func (pu *ProductUseCase) GetCategories() []entities.Category {
+func (pu *ProductUseCase) GetCategories() ([]entities.Category, error) {
 	return pu.categoryrep.GetCategories()
 }

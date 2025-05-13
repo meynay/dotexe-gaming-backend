@@ -8,7 +8,7 @@ func (au *AdminUsecase) AddBlogPost(bp entities.BlogPost) error {
 func (au *AdminUsecase) EditBlogPost(bp entities.BlogPost) error {
 	return au.blogpostrep.EditBlogPost(bp)
 }
-func (au *AdminUsecase) DeleteBlogPost(ID string) error {
+func (au *AdminUsecase) DeleteBlogPost(ID uint) error {
 	return au.blogpostrep.DeleteBlogPost(ID)
 }
 func (au *AdminUsecase) AddComment(cm entities.BPComment) error {

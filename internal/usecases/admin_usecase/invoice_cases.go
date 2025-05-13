@@ -4,8 +4,6 @@ import (
 	"sort"
 	"store/internal/entities"
 	"time"
-
-	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func (au *AdminUsecase) GetInvoices(filter entities.InvoiceFilter) []entities.Invoice {
@@ -15,13 +13,13 @@ func (au *AdminUsecase) GetInvoices(filter entities.InvoiceFilter) []entities.In
 		if filter.Status != entities.All && invoice.OrderStatus != filter.Status {
 			continue
 		}
-		if filter.From.After(invoice.InvoiceDate) || filter.To.Before(invoice.InvoiceDate) {
+		if filter.From.After(invoice.CreatedAt) || filter.To.Before(invoice.CreatedAt) {
 			continue
 		}
 		invoices = append(invoices, invoice)
 	}
 	sort.Slice(invoices, func(i, j int) bool {
-		return invoices[i].InvoiceDate.After(invoices[j].InvoiceDate)
+		return invoices[i].CreatedAt.After(invoices[j].CreatedAt)
 	})
 	from := (filter.Page - 1) * filter.CountToShow
 	to := from + filter.CountToShow
@@ -33,7 +31,7 @@ func (au *AdminUsecase) GetInvoices(filter entities.InvoiceFilter) []entities.In
 	return invoices[from:to]
 }
 
-func (au *AdminUsecase) GetInvoice(id primitive.ObjectID) (string, string, entities.Invoice, error) {
+func (au *AdminUsecase) GetInvoice(id uint) (string, string, entities.Invoice, error) {
 	invoice, err := au.invoicerep.GetInvoice(id)
 	if err != nil {
 		return "", "", invoice, err
@@ -41,7 +39,7 @@ func (au *AdminUsecase) GetInvoice(id primitive.ObjectID) (string, string, entit
 	return au.userrep.GetUsername(invoice.UserID), au.userrep.GetPhoneNumber(invoice.UserID), invoice, nil
 }
 
-func (au *AdminUsecase) ChangeInvoiceStatus(invoiceid primitive.ObjectID, status int) error {
+func (au *AdminUsecase) ChangeInvoiceStatus(invoiceid uint, status int) error {
 	return au.invoicerep.ChangeStatus(invoiceid, status)
 }
 

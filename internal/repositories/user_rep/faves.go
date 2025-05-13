@@ -1,41 +1,53 @@
 package user_rep
 
 import (
-	"context"
 	"fmt"
 	"store/internal/entities"
-
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	"store/pkg"
 )
 
-func (ur *UserRepository) AddToFaves(productid, userid primitive.ObjectID) error {
-	_, err := ur.db.UpdateOne(context.TODO(), bson.M{"_id": userid}, bson.M{"$addToSet": bson.M{"faves": productid}})
-	if err != nil {
-		return fmt.Errorf("couldn't add product to faves")
+func (ur *UserRepository) AddToFaves(productid, userid uint) error {
+	var user entities.User
+	tx := ur.db.First(&user, userid)
+	if tx.Error != nil {
+		return fmt.Errorf("couldn't find user")
 	}
+	user.Faves = append(user.Faves, productid)
 	return nil
 }
 
-func (ur *UserRepository) DeleteFromFaves(productid, userid primitive.ObjectID) error {
-	_, err := ur.db.UpdateOne(context.TODO(), bson.M{"_id": userid}, bson.M{"$pull": bson.M{"faves": productid}})
-	if err != nil {
-		return fmt.Errorf("couldn't delete product from faves")
+func (ur *UserRepository) DeleteFromFaves(productid, userid uint) error {
+	var user entities.User
+	tx := ur.db.First(&user, userid)
+	if tx.Error != nil {
+		return fmt.Errorf("couldn't find user")
 	}
-	return nil
+	for index, pid := range user.Faves {
+		if pid == productid {
+			user.Faves = append(user.Faves[:index], user.Faves[index+1:]...)
+			return nil
+		}
+	}
+	return fmt.Errorf("product was not in user faves")
 }
 
-func (ur *UserRepository) CheckFave(productid, userid primitive.ObjectID) error {
-	res := ur.db.FindOne(context.TODO(), bson.M{"_id": userid, "faves.product_id": productid})
-	if res.Err() != nil {
-		return fmt.Errorf("couldn't find product at user faves")
+func (ur *UserRepository) CheckFave(productid, userid uint) error {
+	var user entities.User
+	res := ur.db.First(&user, userid)
+	if res.Error != nil {
+		return fmt.Errorf("couldn't find user")
 	}
-	return nil
+	if pkg.Exists(productid, user.Faves) {
+		return nil
+	}
+	return fmt.Errorf("product doesn't exist in faves")
 }
 
-func (ur *UserRepository) GetFaves(userid primitive.ObjectID) []primitive.ObjectID {
-	res := ur.db.FindOne(context.TODO(), bson.M{"_id": userid})
+func (ur *UserRepository) GetFaves(userid uint) []uint {
 	var u entities.User
-	res.Decode(&u)
+	res := ur.db.First(&u, userid)
+	if res.Error != nil {
+		return []uint{}
+	}
 	return u.Faves
 }

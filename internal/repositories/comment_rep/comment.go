@@ -1,37 +1,33 @@
 package comment_rep
 
 import (
-	"context"
 	"fmt"
 	"store/internal/entities"
 
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
+	"gorm.io/gorm"
 )
 
 type CommentRep struct {
-	rep *mongo.Collection
+	rep *gorm.DB
 }
 
-func NewCommentRep(crep *mongo.Collection) *CommentRep {
+func NewCommentRep(crep *gorm.DB) *CommentRep {
 	return &CommentRep{rep: crep}
 }
 
 func (cr *CommentRep) AddComment(c entities.Comment) error {
-	_, err := cr.rep.InsertOne(context.TODO(), c)
-	if err != nil {
+	tx := cr.rep.Create(&c)
+	if tx.Error != nil {
 		return fmt.Errorf("couldn't insert comment")
 	}
 	return nil
 }
 
-func (cr *CommentRep) GetComments(productid primitive.ObjectID) ([]entities.Comment, error) {
+func (cr *CommentRep) GetComments(productid uint) ([]entities.Comment, error) {
 	var comments []entities.Comment
-	res, err := cr.rep.Find(context.TODO(), bson.M{"product_id": productid})
-	if err != nil {
+	tx := cr.rep.First(&comments, entities.Comment{ProductID: productid})
+	if tx.Error != nil {
 		return comments, fmt.Errorf("couldn't find comments on product")
 	}
-	res.All(context.TODO(), &comments)
 	return comments, nil
 }
