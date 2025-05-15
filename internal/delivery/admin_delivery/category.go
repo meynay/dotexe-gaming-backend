@@ -35,11 +35,17 @@ func (ad *AdminDelivery) AddCategory(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing category data"})
 		return
 	}
+	ctgr := struct {
+		Name   string `json:"name"`
+		Parent uint   `json:"parent_id"`
+	}{}
 	var category entities.Category
-	if err := json.Unmarshal([]byte(categoryJSON), &category); err != nil {
+	if err := json.Unmarshal([]byte(categoryJSON), &ctgr); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid category data"})
 		return
 	}
+	category.Name = ctgr.Name
+	category.ParentID = &(ctgr.Parent)
 	if err := os.MkdirAll(categoryDir, 0755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create upload directory"})
 		return
@@ -92,11 +98,17 @@ func (ad *AdminDelivery) EditCategory(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "missing category data"})
 		return
 	}
+	ctgr := struct {
+		Name   string `json:"name"`
+		Parent uint   `json:"parent_id"`
+	}{}
 	var category entities.Category
-	if err := json.Unmarshal([]byte(categoryJSON), &category); err != nil {
+	if err := json.Unmarshal([]byte(categoryJSON), &ctgr); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid category data"})
 		return
 	}
+	category.Name = ctgr.Name
+	category.ParentID = &(ctgr.Parent)
 	primaryImage, err := c.FormFile("image")
 	if err == nil {
 		uniqueID := uuid.New().String()
