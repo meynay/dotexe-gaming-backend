@@ -50,8 +50,10 @@ func GetConnection() *gorm.DB {
 	ssl := os.Getenv("DB_SSL_MODE")
 	connString := fmt.Sprintf("host=%s user=%s password=%s dbname=%s port=%s sslmode=%s", host, user, pass, db, port, ssl)
 	DB, err := gorm.Open(postgres.Open(connString), &gorm.Config{Logger: logger.Default.LogMode(logger.Info)})
-	if err != nil {
-		panic("couldn't connect to database")
+	for err != nil {
+		log.Println("couldn't connect to database!, trying to reconnect in 5 seconds")
+		time.Sleep(5 * time.Second)
+		DB, err = gorm.Open(postgres.Open(connString), &gorm.Config{Logger: logger.Default.LogMode(logger.Info)})
 	}
 	return DB
 }
