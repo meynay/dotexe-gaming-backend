@@ -32,7 +32,7 @@ func (ar *AdminRep) GetName(id uint) string {
 func (ar *AdminRep) AddAdmin(username, password string) error {
 	admin := entities.Admin{}
 	username = strings.ToLower(username)
-	res := ar.rep.First(&admin, entities.Admin{Username: username})
+	res := ar.rep.Where("username = ?", username).First(&admin)
 	if res.Error == nil && admin.Username == username {
 		return fmt.Errorf("user exists")
 	}
@@ -63,7 +63,7 @@ func (ar *AdminRep) GetInfo(adminID uint) (entities.Admin, error) {
 
 func (ar *AdminRep) FillFields(admin entities.Admin) error {
 	var temp entities.Admin
-	res := ar.rep.First(&temp, entities.Admin{Phone: admin.Phone})
+	res := ar.rep.Where("username = ?", admin.Username).First(&temp)
 	if res.Error != nil {
 		return res.Error
 	}
@@ -80,7 +80,7 @@ func (ar *AdminRep) FillFields(admin entities.Admin) error {
 func (ar *AdminRep) Login(username, password string) (uint, error) {
 	username = strings.ToLower(username)
 	admin := entities.Admin{}
-	res := ar.rep.First(&admin, entities.Admin{Username: username})
+	res := ar.rep.Where("username = ?", username).First(&admin)
 	if res.Error != nil {
 		return 0, res.Error
 	}

@@ -51,8 +51,8 @@ func (r *UserRepository) InsertUserByEmail(email, password string) (*entities.Us
 
 func (r *UserRepository) GetUserByPhone(phone string) (*entities.User, error) {
 	var user entities.User
-	err := r.db.First(&user, entities.User{Phone: phone})
-	if err != nil {
+	tx := r.db.Where("phone = ?", phone).First(&user)
+	if tx.Error != nil {
 		return nil, fmt.Errorf("user not found")
 	}
 	return &user, nil
@@ -61,8 +61,8 @@ func (r *UserRepository) GetUserByPhone(phone string) (*entities.User, error) {
 func (r *UserRepository) GetUserByEmail(email string) (*entities.User, error) {
 	var user entities.User
 	email = strings.ToLower(email)
-	err := r.db.First(&user, entities.User{Email: email})
-	if err != nil {
+	tx := r.db.Where("email = ?", email).First(&user)
+	if tx.Error != nil {
 		return nil, fmt.Errorf("user not found")
 	}
 	return &user, nil
@@ -71,8 +71,8 @@ func (r *UserRepository) GetUserByEmail(email string) (*entities.User, error) {
 func (r *UserRepository) CheckUser(email, password string) (*entities.User, error) {
 	var user entities.User
 	email = strings.ToLower(email)
-	err := r.db.First(&user, entities.User{Email: email})
-	if err != nil {
+	tx := r.db.Where("email = ?", email).First(&user)
+	if tx.Error != nil {
 		return nil, fmt.Errorf("user not found")
 	}
 	if pkg.CompareHashAndPassword(user.Password, password) != nil {
@@ -82,7 +82,7 @@ func (r *UserRepository) CheckUser(email, password string) (*entities.User, erro
 }
 
 func (r *UserRepository) SaveToken(userID uint, token string) error {
-	res := r.db.Model(entities.User{}).Where("id = ?", userID).Update("refresh_roken = ?", token)
+	res := r.db.Model(entities.User{}).Where("id = ?", userID).Update("refresh_token = ?", token)
 	return res.Error
 }
 

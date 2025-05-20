@@ -36,7 +36,7 @@ func (rr *RatingRep) ChangeRating(rating entities.Rating) error {
 
 func (rr *RatingRep) GetRating(userid, productid uint) (entities.Rating, error) {
 	var r entities.Rating
-	res := rr.rep.First(&r, entities.Rating{UserID: userid, ProductID: productid})
+	res := rr.rep.Where("user_id = ? AND product_id = ?", userid, productid).First(&r)
 	if res.Error != nil {
 		return entities.Rating{}, res.Error
 	}
@@ -45,7 +45,7 @@ func (rr *RatingRep) GetRating(userid, productid uint) (entities.Rating, error) 
 
 func (rr *RatingRep) GetRatings(productid uint) []entities.Rating {
 	var rates []entities.Rating
-	tx := rr.rep.Find(&rates, entities.Rating{ProductID: productid})
+	tx := rr.rep.Where("product_id = ?", productid).Find(&rates)
 	if tx.Error != nil {
 		return []entities.Rating{}
 	}

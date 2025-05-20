@@ -25,7 +25,7 @@ func (cr *CommentRep) AddComment(c entities.Comment) error {
 
 func (cr *CommentRep) GetComments(productid uint) ([]entities.Comment, error) {
 	var comments []entities.Comment
-	tx := cr.rep.First(&comments, entities.Comment{ProductID: productid})
+	tx := cr.rep.Where("product_id = ?", productid).First(&comments)
 	if tx.Error != nil {
 		return comments, fmt.Errorf("couldn't find comments on product")
 	}

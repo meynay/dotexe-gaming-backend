@@ -40,11 +40,11 @@ func (ur *UserRepository) GetInfo(ID uint) (entities.User, error) {
 
 func (ur *UserRepository) FillInfo(user entities.User) error {
 	var temp entities.User
-	ur.db.First(&temp, entities.User{Email: user.Email})
+	ur.db.Where("email = ?", user.Email).First(&temp)
 	if temp.ID != user.ID {
 		return fmt.Errorf("email exists")
 	}
-	ur.db.First(&temp, entities.User{Phone: user.Phone})
+	ur.db.Where("phone = ?", user.Phone).First(&temp)
 	if temp.ID != user.ID {
 		return fmt.Errorf("phone number exists")
 	}

@@ -36,7 +36,7 @@ func (ir *InvoiceRep) GetInvoice(id uint) (entities.Invoice, error) {
 
 func (ir *InvoiceRep) GetInvoices(userid uint) ([]entities.Invoice, error) {
 	invoices := []entities.Invoice{}
-	tx := ir.rep.Find(&invoices, entities.Invoice{UserID: userid})
+	tx := ir.rep.Where("user_id = ?", userid).Find(&invoices)
 	if tx.Error != nil {
 		return invoices, fmt.Errorf("error getting invoices")
 	}
