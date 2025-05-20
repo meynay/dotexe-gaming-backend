@@ -19,9 +19,9 @@ type Address struct {
 
 type User struct {
 	gorm.Model
-	Phone        string    `gorm:"type:varchar(20);uniqueIndex" json:"phone_number"`
+	Phone        string    `gorm:"type:varchar(11)" json:"phone_number"`
 	Password     string    `gorm:"type:varchar(100)" json:"-"`
-	Email        string    `gorm:"type:varchar(100);uniqueIndex" json:"email"`
+	Email        string    `gorm:"type:varchar(100)" json:"email"`
 	RefreshToken string    `gorm:"type:text;index" json:"-"`
 	FirstName    string    `gorm:"type:varchar(50)" json:"firstname"`
 	LastName     string    `gorm:"type:varchar(50)" json:"lastname"`
