@@ -107,7 +107,7 @@ func (d *UserDelivery) SignupWithEmail(c *gin.Context) {
 	}
 	id, err := d.uu.SignupWithEmail(in.Email, in.Password)
 	if err != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"message": "couldn't register user"})
+		c.JSON(http.StatusInternalServerError, gin.H{"message": "couldn't register user", "error": err.Error()})
 		return
 	}
 	at, rt, err := d.generator.GenerateJWT(id, 15)
