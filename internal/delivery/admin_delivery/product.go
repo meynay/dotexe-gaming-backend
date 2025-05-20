@@ -152,9 +152,7 @@ func (ad *AdminDelivery) EditProduct(c *gin.Context) {
 		link := fmt.Sprintf("%sproduct/%s", host, secondaryFilename)
 		imageLinks = append(imageLinks, link)
 	}
-	images := product.Images
-	images = entities.JSONB{"images": imageLinks}
-	product.Images = images
+	product.Images = entities.JSONB{"images": imageLinks}
 	err = ad.adminusecase.EditProduct(product)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err})

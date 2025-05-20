@@ -124,7 +124,7 @@ func (d *UserDelivery) SignupWithEmail(c *gin.Context) {
 
 func (d *UserDelivery) SignupWithPhone(c *gin.Context) {
 	in := struct {
-		Phone string `json:"phone"`
+		Phone string `json:""`
 		Code  string `json:"code"`
 	}{}
 	err := c.BindJSON(&in)
