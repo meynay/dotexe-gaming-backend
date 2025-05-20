@@ -23,8 +23,8 @@ type User struct {
 	Password     string    `gorm:"type:varchar(100)" json:"-"`
 	Email        string    `gorm:"type:varchar(100);uniqueIndex" json:"email"`
 	RefreshToken string    `gorm:"type:text;index" json:"-"`
-	FirstName    string    `gorm:"type:varchar(50);not null" json:"firstname"`
-	LastName     string    `gorm:"type:varchar(50);not null" json:"lastname"`
+	FirstName    string    `gorm:"type:varchar(50)" json:"firstname"`
+	LastName     string    `gorm:"type:varchar(50)" json:"lastname"`
 	Addresses    []Address `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"addresses,omitempty"`
 	Faves        []uint    `gorm:"type:jsonb" json:"faves"`
 	Cart         []Item    `gorm:"foreignKey:UserID;constraint:OnDelete:CASCADE" json:"cart,omitempty"`
