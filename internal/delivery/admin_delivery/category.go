@@ -45,7 +45,11 @@ func (ad *AdminDelivery) AddCategory(c *gin.Context) {
 		return
 	}
 	category.Name = ctgr.Name
-	category.ParentID = &(ctgr.Parent)
+	if ctgr.Parent != 0 {
+		category.ParentID = &(ctgr.Parent)
+	} else {
+		category.ParentID = nil
+	}
 	if err := os.MkdirAll(categoryDir, 0755); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "could not create upload directory"})
 		return
@@ -108,7 +112,11 @@ func (ad *AdminDelivery) EditCategory(c *gin.Context) {
 		return
 	}
 	category.Name = ctgr.Name
-	category.ParentID = &(ctgr.Parent)
+	if ctgr.Parent != 0 {
+		category.ParentID = &(ctgr.Parent)
+	} else {
+		category.ParentID = nil
+	}
 	primaryImage, err := c.FormFile("image")
 	if err == nil {
 		uniqueID := uuid.New().String()
